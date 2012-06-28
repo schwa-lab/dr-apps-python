@@ -1,3 +1,6 @@
+"""
+Apps to get basic statistics and meta-data from documents.
+"""
 import sys
 from operator import attrgetter
 from drcli.api import App
@@ -81,7 +84,10 @@ class CountApp(App):
   def _make_store_counter(attr):
     get_store = attrgetter(attr)
     def count(doc):
-      return len(get_store(doc))
+      try:
+        return len(get_store(doc))
+      except AttributeError:
+        return 0
     return count
 
 CountApp.register_name('count')

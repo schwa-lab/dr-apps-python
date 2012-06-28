@@ -1,4 +1,6 @@
-
+"""
+Apps to restructure a corpus.
+"""
 from drcli.api import App
 from drcli.appargs import DESERIALISE_AP, OSTREAM_AP, ISTREAM_AP
 

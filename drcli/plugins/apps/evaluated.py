@@ -1,3 +1,6 @@
+"""
+Apps which evaluate a function for each doc and act upon the result.
+"""
 from drcli.api import App
 from drcli.appargs import DESERIALISE_AP, OSTREAM_AP, get_evaluator_ap
 

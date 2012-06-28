@@ -1,0 +1,10 @@
+.*.sw[opq]
+*.h.gch
+*.o
+*.pyc
+Makefile
+Makefile.depends
+build
+ext
+./lib
+tags

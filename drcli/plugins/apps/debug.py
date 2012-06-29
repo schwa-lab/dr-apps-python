@@ -7,7 +7,7 @@ from drcli.appargs import ISTREAM_AP, OSTREAM_AP
 
 class DumpApp(App):
   """
-  Unpack the messages on the stream and pretty-print them.
+  Debug: unpack the stream and pretty-print it.
   """
   arg_parsers = (ISTREAM_AP, OSTREAM_AP)
 

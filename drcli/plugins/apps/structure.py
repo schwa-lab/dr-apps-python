@@ -45,14 +45,19 @@ class HeadApp(App):
   """
   Extract the first n documents.
   """
+  # TODO: handle multiple input sources
   head_arg_parser = ArgumentParser()
-  head_arg_parser.add_argument('-n', '--ndocs', metavar='count', type=int, default=1, help='The number of documents to extract (default: %(default)s)')
+  head_arg_parser.add_argument('-n', '--ndocs', metavar='COUNT', type=int, default=1, help='The number of documents to extract (default: %(default)s)')
+  head_arg_parser.add_argument('--skip', type=int, default=0, help='The number of documents to skip before extracting')
   arg_parsers = (head_arg_parser, ISTREAM_AP, OSTREAM_AP)
 
   def __call__(self):
     # TODO: avoid desiralising
     writer = self.stream_writer
-    for i, doc in izip(xrange(self.args.ndocs), self.stream_reader):
+    reader = self.stream_reader
+    for i, doc in izip(xrange(self.args.skip), reader):
+      pass
+    for i, doc in izip(xrange(self.args.ndocs), reader):
       writer.write_doc(doc)
 
 

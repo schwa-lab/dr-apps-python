@@ -101,12 +101,17 @@ class ListStoresApp(App):
   List the stores available in the corpus.
   Where multiple documents are input, also indicates the number of documents where they appear.
   """
-  arg_parsers = (DESERIALISE_AP,)
+  ls_arg_parser = ArgumentParser()
+  ls_arg_parser.add_argument('-e', '--each-doc', dest='show_each', default=False, action='store_true', help='List stores for each doc')
+  arg_parsers = (ls_arg_parser, DESERIALISE_AP,)
 
   def __call__(self):
     counter = defaultdict(int)
     for i, doc in enumerate(self.stream_reader):
-      for name in get_store_names(doc):
+      names = list(get_store_names(doc))
+      if self.args.show_each:
+        print ' '.join(sorted(names))
+      for name in names:
         counter[name] += 1
     try:
       if i == 1:

@@ -25,7 +25,8 @@ class SubParsed(object):
 def add_subparsers(parser, library, cls_arg, **kwargs):
   subparsers = parser.add_subparsers(**kwargs)
   for name, cls in library:
-    subp = subparsers.add_parser(name, parents=cls.get_arg_parsers(), help=cls.__doc__.strip().split('\n')[0], usage=cls.__doc__)
+    doc = cls.__doc__ or ''
+    subp = subparsers.add_parser(name, parents=cls.get_arg_parsers(), help=doc.strip().split('\n')[0], usage=doc)
     subp.set_defaults(**{cls_arg: cls})
 
 
@@ -33,7 +34,7 @@ class Evaluator(SubParsed):
   CLASSES = {}
 
   def __call__(self, doc):
-    raise NotImplementedError()
+    raise NotImplementedError('{0}.__call__ is undefined'.format(self.__class__.__name__))
 
   def as_boolean(self, doc):
     res = self(doc)
@@ -48,11 +49,11 @@ class App(SubParsed):
   CLASSES = {}
 
   def __call__(self):
-    raise NotImplementedError()
+    raise NotImplementedError('{0}.__call__ is undefined'.format(self.__class__.__name__))
 
   @property
   def stream_reader(self):
-    return Reader(self.args.doc_class).stream(self.args.in_stream)
+    return Reader(getattr(self.args, 'doc_class', None)).stream(self.args.in_stream)
 
   @property
   def stream_writer(self):

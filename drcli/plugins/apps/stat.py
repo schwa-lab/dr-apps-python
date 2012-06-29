@@ -3,8 +3,14 @@ Apps to get basic statistics and meta-data from documents.
 """
 import sys
 from operator import attrgetter
+from collections import defaultdict
 from drcli.api import App
 from drcli.appargs import ArgumentParser, DESERIALISE_AP
+
+
+def get_store_names(doc):
+  # FIXME: problematic reflection
+  return doc._dr_stores.keys()
 
 
 class CountApp(App):
@@ -66,8 +72,7 @@ class CountApp(App):
     names = []
     extractors = []
     if self.args.count_all:
-      # FIXME: problematic reflection
-      self.args.count_stores = sorted(doc._dr_stores.keys())
+      self.args.count_stores = sorted(get_store_names(doc))
     if self.args.count_docs:
       names.append('docs')
       extractors.append(self._doc_counter)
@@ -90,4 +95,29 @@ class CountApp(App):
         return 0
     return count
 
+
+class ListStoresApp(App):
+  """
+  List the stores available in the corpus.
+  Where multiple documents are input, also indicates the number of documents where they appear.
+  """
+  arg_parsers = (DESERIALISE_AP,)
+
+  def __call__(self):
+    counter = defaultdict(int)
+    for i, doc in enumerate(self.stream_reader):
+      for name in get_store_names(doc):
+        counter[name] += 1
+    try:
+      if i == 1:
+        fmt = '{name}'
+      else:
+        fmt = '{name}\t{count}'
+    except NameError:
+      print >> sys.stderr, "No documents found"
+    for k, v in sorted(counter.items(), key=lambda (k, v): (-v, k)):
+      print fmt.format(name=k, count=v)
+
+
 CountApp.register_name('count')
+ListStoresApp.register_name('ls')

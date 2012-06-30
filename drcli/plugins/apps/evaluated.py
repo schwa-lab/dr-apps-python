@@ -14,8 +14,8 @@ class FormatApp(App):
 
   def __call__(self):
     evaluator = self.evaluator
-    for doc in self.stream_reader:
-      print evaluator(doc)
+    for i, doc in enumerate(self.stream_reader):
+      print evaluator(doc, i)
 
 
 class FilterApp(App):
@@ -28,8 +28,8 @@ class FilterApp(App):
   def __call__(self):
     evaluator = self.evaluator
     writer = self.stream_writer
-    for doc in self.stream_reader:
-      if evaluator.as_boolean(doc):
+    for i, doc in enumerate(self.stream_reader):
+      if evaluator.as_boolean(doc, i):
         # TODO: avoid re-serialising
         writer.write_doc(doc)
 

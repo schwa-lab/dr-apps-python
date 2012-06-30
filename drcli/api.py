@@ -33,11 +33,11 @@ def add_subparsers(parser, library, cls_arg, **kwargs):
 class Evaluator(SubParsed):
   CLASSES = {}
 
-  def __call__(self, doc):
+  def __call__(self, doc, ind):
     raise NotImplementedError('{0}.__call__ is undefined'.format(self.__class__.__name__))
 
-  def as_boolean(self, doc):
-    res = self(doc)
+  def as_boolean(self, doc, ind):
+    res = self(doc, ind)
     if hasattr(res, 'strip'):
       res = res.strip()
       if res.lower() == 'false':
@@ -47,6 +47,11 @@ class Evaluator(SubParsed):
 
 class App(SubParsed):
   CLASSES = {}
+  def __init__(self, argparser, args):
+    super(App, self).__init__(argparser, args)
+    eval_cls = getattr(args, 'eval_cls', None)
+    if eval_cls:
+      self.evaluator = eval_cls(argparser, args)
 
   def __call__(self):
     raise NotImplementedError('{0}.__call__ is undefined'.format(self.__class__.__name__))

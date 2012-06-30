@@ -13,6 +13,7 @@ from drcli.evalargs import STRING_AP
 
 
 class DjangoEvaluator(Evaluator):
+  """Render a Django template where `doc' and `ind' are in context"""
   arg_parsers = (STRING_AP,)
 
   def __init__(self, argparser, args):

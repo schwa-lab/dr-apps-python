@@ -101,6 +101,7 @@ class ListStoresApp(App):
   List the stores available in the corpus.
   Where multiple documents are input, also indicates the number of documents where they appear.
   """
+  # Extend to list fields, and fields on stored types
   ls_arg_parser = ArgumentParser()
   ls_arg_parser.add_argument('-e', '--each-doc', dest='show_each', default=False, action='store_true', help='List stores for each doc')
   arg_parsers = (ls_arg_parser, DESERIALISE_AP,)

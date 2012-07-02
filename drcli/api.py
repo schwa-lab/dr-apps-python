@@ -28,7 +28,7 @@ def add_subparsers(parser, library, cls_arg, **kwargs):
   subparsers = parser.add_subparsers(**kwargs)
   for name, cls in library:
     doc = cls.__doc__ or ''
-    subp = subparsers.add_parser(name, parents=cls.get_arg_parsers(), help=doc.strip().split('\n')[0], usage=doc)
+    subp = subparsers.add_parser(name, parents=cls.get_arg_parsers(), help=doc.strip().split('\n')[0], description=doc)
     subp.set_defaults(**{cls_arg: cls})
 
 

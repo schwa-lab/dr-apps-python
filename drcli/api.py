@@ -1,6 +1,8 @@
 from schwa.dr import Reader
 from schwa.dr import Writer
 
+DECORATE_METHOD = 'drcli_decorate'
+
 
 class SubParsed(object):
   arg_parsers = ()
@@ -58,7 +60,11 @@ class App(SubParsed):
 
   @property
   def stream_reader(self):
-    return Reader(getattr(self.args, 'doc_class', None)).stream(self.args.in_stream)
+    doc_cls = getattr(self.args, 'doc_class', None)
+    decorate = getattr(doc_cls, DECORATE_METHOD, lambda doc: None)
+    for doc in Reader(doc_cls).stream(self.args.in_stream):
+      decorate(doc)
+      yield doc
 
   @property
   def stream_writer(self):

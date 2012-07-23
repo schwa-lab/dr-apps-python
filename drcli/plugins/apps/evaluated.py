@@ -59,7 +59,27 @@ class SortApp(App):
     for doc_key, doc_data in items:
       print >> self.args.out_stream, doc_data
 
+class SetFieldApp(App):
+  """
+  Set a named field on each document to a value.
+  """
+  field_name_ap = ArgumentParser()
+  field_name_ap.add_argument('field_name', help='The field name to set')
+  arg_parsers = (field_name_ap, get_evaluator_ap(), DESERIALISE_AP, OSTREAM_AP)
+
+  def __call__(self):
+    attr = self.args.field_name
+    evaluator = self.evaluator
+    writer = self.stream_writer
+    for i, doc in enumerate(self.stream_reader):
+      if attr not in doc._dr_s2p:
+        # TODO: externalise reflection methods
+        doc._dr_s2p[attr] = attr
+        doc._dr_fields[attr] = dr.Field(serial=attr)
+      setattr(doc, attr, evaluator(doc, i))
+      writer.write_doc(doc)
 
 FormatApp.register_name('format')
 FilterApp.register_name('filter')
 SortApp.register_name('sort')
+SetFieldApp.register_name('set')

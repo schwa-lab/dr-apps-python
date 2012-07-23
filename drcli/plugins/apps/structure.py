@@ -1,8 +1,10 @@
 """
 Apps to restructure a corpus.
 """
+from StringIO import StringIO
 from collections import defaultdict
 from itertools import izip
+from schwa import dr
 from drcli.api import App
 from drcli.appargs import DESERIALISE_AP, OSTREAM_AP, ISTREAM_AP, ArgumentParser
 
@@ -173,6 +175,28 @@ class HeadApp(App):
       writer.write_doc(doc)
 
 
+class GenerateApp(App):
+  """
+  Generate empty documents.
+  """
+  ndocs_ap = ArgumentParser()
+  ndocs_ap.add_argument('ndocs', nargs='?', metavar='COUNT', type=int, default=float('inf'), help='The number of documents to generate (default: infinity)')
+  arg_parsers = (ndocs_ap, OSTREAM_AP)
+
+  def __call__(self):
+    empty = StringIO()
+    writer = dr.Writer(empty)
+    writer.write_doc(dr.Document())
+    empty = empty.getvalue()
+    
+    out = self.args.out_stream
+    i = 0
+    while i < self.args.ndocs:
+      out.write(empty)
+      i += 1
+
+
 SelectApp.register_name('select')
 RenameApp.register_name('rename')
 HeadApp.register_name('head')
+GenerateApp.register_name('generate')

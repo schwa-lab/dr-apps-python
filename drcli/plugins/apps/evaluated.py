@@ -57,7 +57,8 @@ class SortApp(App):
 
     items.sort()
     for doc_key, doc_data in items:
-      print >> self.args.out_stream, doc_data
+      self.args.out_stream.write(doc_data)
+
 
 class SetFieldApp(App):
   """
@@ -78,6 +79,7 @@ class SetFieldApp(App):
         doc._dr_fields[attr] = dr.Field(serial=attr)
       setattr(doc, attr, evaluator(doc, i))
       writer.write_doc(doc)
+
 
 FormatApp.register_name('format')
 FilterApp.register_name('filter')

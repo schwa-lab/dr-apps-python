@@ -68,7 +68,7 @@ class CountApp(App):
 
     try:
       if self.args.show_total:
-        print self._fmt_counts(totals) + (self.args.field_sep + 'TOTAL' if self.args.show_each else '')
+        print self._fmt_counts(totals) + (self.args.field_sep + 'TOTAL' if self.args.show_interval else '')
     except NameError:
       print >> sys.stderr, "No documents to count"
 

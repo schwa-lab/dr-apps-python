@@ -23,10 +23,11 @@ class CountApp(App):
   count_arg_parser.add_argument('count_stores', metavar='STORE', nargs='*', help='Sum the length of the specified store')
   count_arg_parser.add_argument('-d', '--docs', dest='count_docs', action='store_true', help='Count the number of documents (default without fields specified)')
   count_arg_parser.add_argument('-a', '--all', dest='count_all', action='store_true', help='Count docs and elements in all stores found on the first document')
-  count_arg_parser.add_argument('-e', '--each-doc', dest='show_each', default=False, action='store_true', help='Show counts for each doc')
+  count_arg_parser.add_argument('--every', dest='show_interval', type=int, metavar='N', help='Show counts every N docs')
   count_arg_parser.add_argument('--no-total', dest='show_total', default=True, action='store_false', help='Hides total count across all documents')
   count_arg_parser.add_argument('--no-header', dest='show_header', default=True, action='store_false', help='Hides the field names displayed with more than one field output')
   count_arg_parser.add_argument('--sep', dest='field_sep', default='\t', help='Output field separator')
+  count_arg_parser.add_argument('-c', '--cumulative', default=False, action='store_true', help='Show cumulative counts')
   arg_parsers = (count_arg_parser, DESERIALISE_AP,)
 
   def __init__(self, argparser, args):
@@ -40,8 +41,11 @@ class CountApp(App):
     elif 1 == len(args.count_stores) + (1 if args.count_docs else 0):
       args.show_header = False
 
-    if not (args.show_each or args.show_header or args.show_total):
+    if not (args.show_interval or args.show_header or args.show_total):
       argparser.error('Nothing to display')
+
+    if args.cumulative and not args.show_interval:
+      argparser.error('--cumulative may not apply without --each or --every')
 
     super(CountApp, self).__init__(argparser, args)
 
@@ -54,14 +58,17 @@ class CountApp(App):
           print self.args.field_sep.join(names)
 
       doc_counts = [extract(doc) for extract in extractors]
-      for i, c in enumerate(doc_counts):
-        totals[i] += c
-      if self.args.show_each:
-        print self._fmt_counts(doc_counts)
+      for j, c in enumerate(doc_counts):
+        totals[j] += c
+      if (i + 1) % self.args.show_interval == 0:
+        if self.args.cumulative:
+          print self._fmt_counts(totals)
+        else:
+          print self._fmt_counts(doc_counts)
 
     try:
       if self.args.show_total:
-        print self._fmt_counts(totals) + (self.args.field_sep + 'TOTAL' if self.args.show_each else '')
+        print self._fmt_counts(totals) + (self.args.field_sep + 'TOTAL' if self.args.show_interval else '')
     except NameError:
       print >> sys.stderr, "No documents to count"
 

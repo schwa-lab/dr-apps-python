@@ -3,7 +3,7 @@ import msgpack
 import pprint
 import json
 from schwa import dr
-from schwa.dr.constants import FIELD_TYPE_NAME
+from schwa.dr.constants import FIELD_TYPE_NAME, FIELD_TYPE_POINTER_TO, FIELD_TYPE_IS_SLICE
 from drcli.api import App
 from drcli.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP, DESERIALISE_AP
 
@@ -34,12 +34,13 @@ class DumpApp(App):
       if types is None:
         # No new header
         break
-      store_defs = self._process_store_defs(unpacker.unpack(), types)
+      store_defs = list(self._process_store_defs(unpacker.unpack(), types))
       nbytes = unpacker.unpack()
       obj['__meta__'] = self._process_annot(unpacker.unpack(), types[META_TYPE][1])
       for store_name, store in store_defs:
         nbytes = unpacker.unpack()
         store['items'] = [self._process_annot(item, store['fields']) for item in unpacker.unpack()]
+        store['fields'] = dict(self._fields_to_dict(store['fields'], store_defs))
         # store.pop('fields')
         obj[store_name] = store
       yield obj
@@ -55,6 +56,19 @@ class DumpApp(App):
 
   def _process_annot(self, msg, fields):
     return dict((fields[fnum][FIELD_TYPE_NAME], val) for fnum, val in msg.iteritems())
+
+  def _fields_to_dict(self, fields, store_defs):
+    for field in fields:
+      name = field.pop(FIELD_TYPE_NAME)
+      try:
+        field['points to'], store_data = store_defs[field.pop(FIELD_TYPE_POINTER_TO)]
+      except KeyError:
+        pass
+      try:
+        field['is slice'] = field.pop(FIELD_TYPE_IS_SLICE)
+      except KeyError:
+        pass
+      yield name, field
 
 
 DumpApp.register_name('dump')

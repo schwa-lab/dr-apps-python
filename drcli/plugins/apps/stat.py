@@ -60,7 +60,7 @@ class CountApp(App):
       doc_counts = [extract(doc) for extract in extractors]
       for j, c in enumerate(doc_counts):
         totals[j] += c
-      if (i + 1) % self.args.show_interval == 0:
+      if self.args.show_interval and (i + 1) % self.args.show_interval == 0:
         if self.args.cumulative:
           print self._fmt_counts(totals)
         else:

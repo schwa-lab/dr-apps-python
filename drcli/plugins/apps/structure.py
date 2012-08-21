@@ -3,7 +3,8 @@ Apps to restructure a corpus.
 """
 from StringIO import StringIO
 from collections import defaultdict
-from itertools import izip
+from itertools import izip, islice
+from collections import deque
 from schwa import dr
 from drcli.api import App
 from drcli.appargs import DESERIALISE_AP, OSTREAM_AP, ISTREAM_AP, ArgumentParser
@@ -175,6 +176,28 @@ class HeadApp(App):
       writer.write_doc(doc)
 
 
+class TailApp(App):
+  """
+  Extract the last n documents.
+  """
+  # TODO: handle multiple input sources
+  tail_arg_parser = ArgumentParser()
+  tail_arg_parser.add_argument('-n', '--ndocs', metavar='COUNT', type=int, default=1, help='The number of documents to extract (default: %(default)s)')
+  tail_arg_parser.add_argument('--skip', type=int, default=0, help='The number of documents to skip after extracting')
+  arg_parsers = (tail_arg_parser, ISTREAM_AP, OSTREAM_AP)
+
+  def __call__(self):
+    # TODO: avoid desiralising
+    # TODO: avoid keeping deserialised objects in memory
+    writer = self.stream_writer
+    reader = self.stream_reader
+    buf = deque(maxlen=self.args.ndocs + self.args.skip)
+    for doc in reader:
+      buf.append(doc)
+    for doc in islice(buf, self.args.ndocs):
+      writer.write_doc(doc)
+
+
 class GenerateApp(App):
   """
   Generate empty documents.
@@ -199,4 +222,5 @@ class GenerateApp(App):
 SelectApp.register_name('select')
 RenameApp.register_name('rename')
 HeadApp.register_name('head')
+TailApp.register_name('tail')
 GenerateApp.register_name('generate')

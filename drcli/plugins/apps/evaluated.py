@@ -36,11 +36,26 @@ class FilterApp(App):
         writer.write_doc(doc)
 
 
+class RandomEvaluator(Evaluator):
+  """Distribute to each of k folds"""
+  ap = ArgumentParser()
+  ap.add_argument('--seed', dest='rand_seed', type=int, default=None)
+  arg_parsers = (ap,)
+
+  def __init__(self, argparser, args):
+    super(RandomEvaluator, self).__init__(argparser, args)
+    import random
+    self.gen_random = random.Random(self.args.rand_seed).random
+
+  def __call__(self, doc, ind):
+      return self.gen_random()
+
+
 class SortApp(App):
   """
   Sort the documents using an evaluator.
   """
-  arg_parsers = (get_evaluator_ap(), DESERIALISE_AP, OSTREAM_AP)
+  arg_parsers = (get_evaluator_ap({'random': RandomEvaluator}), DESERIALISE_AP, OSTREAM_AP)
 
   def __call__(self):
     tmp_out = StringIO()
@@ -88,7 +103,8 @@ class KFoldsEvaluator(Evaluator):
   arg_parsers = (ap,)
 
   def __call__(self, doc, ind):
-      return ind % self.args.kfolds
+    return ind % self.args.kfolds
+
 
 class FoldsApp(App):
   """

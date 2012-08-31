@@ -137,15 +137,6 @@ class Compose(App):
   # TODO: can this be done in Python API?
 
 
-class FoldsApp(App):
-  """
-  Split a stream into multiple files.
-  """
-  arg_parsers = (ISTREAM_AP,)
-  pass
-  # TODO: avoid desiralising
-
-
 class CatApp(App):
   """
   Concatenate docrep files.

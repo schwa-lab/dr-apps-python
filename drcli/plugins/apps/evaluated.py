@@ -3,7 +3,7 @@ Apps which evaluate a function for each doc and act upon the result.
 """
 from StringIO import StringIO
 from schwa import dr
-from drcli.api import App
+from drcli.api import App, Evaluator
 from drcli.appargs import DESERIALISE_AP, OSTREAM_AP, get_evaluator_ap
 
 class FormatApp(App):
@@ -81,7 +81,55 @@ class SetFieldApp(App):
       writer.write_doc(doc)
 
 
+class KFoldsEvaluator(Evaluator):
+  """Distribute to each of k folds"""
+  ap = ArgumentParser()
+  ap.add_argument('kfolds', type=int)
+  arg_parsers = (ap,)
+
+  def __call__(self, doc, ind):
+      return ind % self.args.kfolds
+
+class FoldsApp(App):
+  """
+  Split a stream into k files, or a separate file for each key determined per doc.
+  To perform stratified k-fold validation, first sort the corpus by the stratification label.
+  """
+  multioutput_ap = ArgumentParser()
+  multioutput_ap.add_argument('-t', '--template', dest='path_tpl', default='fold{n:03d}.dr', help='A template for output paths (default: %(default)s). {n} substitutes for fold number, {key} for evaluation output.')
+  multioutput_ap.add_argument('--overwrite', action='store_true', default=False, help='Overwrite an output file if it already exists.')
+  arg_parsers = (ISTREAM_AP, multioutput_ap, get_evaluator_ap({'k': KFoldsEvaluator}),)
+
+  def __init__(self, argparser, args):
+    if '{' not in args.path_tpl:
+      argparser.error('Output path template must include a substitution (e.g. {n:02d} or {key})')
+    super(FoldsApp, self).__init__(argparser, args)
+
+  # TODO: avoid desrialising in the k folds case...?
+  def __call__(self):
+    writers = {}
+    def new_writer(key):
+        fold_num = len(writers)
+        path = self.args.path_tpl.format(n=fold_num, key=key)
+        import sys, os.path
+        if not self.args.overwrite and os.path.exists(path):
+          print >> sys.stderr, 'Path {0} already exists. Use --overwrite to overwrite.'.format(path)
+          sys.exit(1)
+        print >> sys.stderr, 'Writing fold {k} to {path}'.format(k=fold_num, path=path)
+        return dr.Writer(open(path, 'wb'))
+
+    evaluator = self.evaluator
+    for i, doc in enumerate(self.stream_reader):
+      key = evaluator(doc, i)
+      try:
+        writer = writers[key]
+      except KeyError:
+        writer = writers[key] = new_writer(key)
+      writer.write_doc(doc)
+
+
 FormatApp.register_name('format')
 FilterApp.register_name('filter')
 SortApp.register_name('sort')
+FoldsApp.register_name('folds')
 SetFieldApp.register_name('set')

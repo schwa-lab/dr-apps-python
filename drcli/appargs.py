@@ -16,8 +16,8 @@ DESERIALISE_AP.add_argument('--doc-class', metavar='CLS', dest='doc_class', type
 OSTREAM_AP = ArgumentParser(add_help=False)
 OSTREAM_AP.add_argument('--out-file', metavar='PATH', dest='out_stream', type=argparse.FileType('wb'), default=sys.stdout, help='The output file (default: STDOUT)')
 
-def get_evaluator_ap():
+def get_evaluator_ap(extra={}):
   from api import add_subparsers, Evaluator
   res = ArgumentParser(add_help=False)
-  add_subparsers(res, sorted(Evaluator.CLASSES.items()), 'eval_cls', title='evaluators')
+  add_subparsers(res, sorted(extra.items()) + sorted(Evaluator.CLASSES.items()), 'eval_cls', title='evaluators')
   return res

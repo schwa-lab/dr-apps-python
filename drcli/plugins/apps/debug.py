@@ -15,6 +15,7 @@ class DumpApp(App):
   """
   dump_ap = ArgumentParser()
   dump_ap.add_argument('-m', '--human', dest='human_readable', action='store_true', default=False, help='Reinterpret the messages to be more human-readable by integrating headers into content.')
+  dump_ap.add_argument('-n', '--numbered', action='store_true', default=False, help='In --human mode, add a \'#\' field to each annotation, indicating its ordinal index')
   arg_parsers = (dump_ap, ISTREAM_AP, OSTREAM_AP)
 
   def dump(self, obj):
@@ -40,6 +41,9 @@ class DumpApp(App):
       for store_name, store in store_defs:
         nbytes = unpacker.unpack()
         store['items'] = [self._process_annot(item, store['fields']) for item in unpacker.unpack()]
+        if self.args.numbered:
+          for i, item in enumerate(store['items']):
+            item['#'] = i
         store['fields'] = dict(self._fields_to_dict(store['fields'], store_defs))
         # store.pop('fields')
         obj[store_name] = store

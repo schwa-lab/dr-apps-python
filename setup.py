@@ -12,7 +12,7 @@ setup(name='drcli',
       url='http://schwa.org/git/drcli.git',
       packages=['drcli'],
       scripts=['dr'],
-      install_requires=['argparse'],
+      install_requires=['argparse', 'brownie'],
       package_data = {
         'drcli': ['plugins/*/*.py'],
       },

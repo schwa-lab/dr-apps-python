@@ -35,6 +35,9 @@ class DumpApp(App):
       if types is None:
         # No new header
         break
+      elif isinstance(types, int):
+        obj['__version__'] = types
+        types = unpacker.unpack()
       store_defs = list(self._process_store_defs(unpacker.unpack(), types))
       nbytes = unpacker.unpack()
       obj['__meta__'] = self._process_annot(unpacker.unpack(), types[META_TYPE][1])

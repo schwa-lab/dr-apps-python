@@ -8,3 +8,7 @@ build
 ext
 ./lib
 tags
+dist
+drcli.egg-info
+setuptools_git-0.4.2-py2.7.egg/
+ve

@@ -1,3 +1,4 @@
+import sys
 from schwa.dr import Reader
 from schwa.dr import Writer
 
@@ -60,11 +61,19 @@ class App(SubParsed):
 
   @property
   def stream_reader(self):
-    doc_cls = getattr(self.args, 'doc_class', None)
-    decorate = getattr(doc_cls, DECORATE_METHOD, lambda doc: None)
-    for doc in Reader(doc_cls).stream(self.args.in_stream):
+    stream, docs = self.get_stream_readers(self.args.in_stream).next()
+    return docs
+
+  def _read_stream(self, stream, doc_cls, decorate):
+    for doc in Reader(doc_cls).stream(stream):
       decorate(doc)
       yield doc
+
+  def get_stream_readers(self, *streams):
+    doc_cls = getattr(self.args, 'doc_class', None)
+    decorate = getattr(doc_cls, DECORATE_METHOD, lambda doc: None)
+    for stream in streams:
+      yield stream, self._read_stream(stream, doc_cls, decorate)
 
   @property
   def stream_writer(self):

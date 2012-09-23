@@ -5,7 +5,7 @@ import sys
 from operator import attrgetter
 from collections import defaultdict
 from drcli.api import App
-from drcli.appargs import ArgumentParser, DESERIALISE_AP
+from drcli.appargs import ArgumentParser, DESERIALISE_AP, argparse
 
 
 def get_store_names(doc):
@@ -20,14 +20,17 @@ class CountApp(App):
   # TODO: options to choose stores to count
   # TODO: avoid desiralising?
   count_arg_parser = ArgumentParser()
-  count_arg_parser.add_argument('count_stores', metavar='STORE', nargs='*', help='Sum the length of the specified store')
+  count_arg_parser.add_argument('-s', '--store', metavar='ATTR', dest='count_stores', action='append', default=[], help='Count the specified store')
   count_arg_parser.add_argument('-d', '--docs', dest='count_docs', action='store_true', help='Count the number of documents (default without fields specified)')
   count_arg_parser.add_argument('-a', '--all', dest='count_all', action='store_true', help='Count docs and elements in all stores found on the first document')
   count_arg_parser.add_argument('--every', dest='show_interval', type=int, metavar='N', help='Show counts every N docs')
+  count_arg_parser.add_argument('-e', '--every1', dest='show_interval', action='store_const', const=1, help='Show counts every doc')
+  count_arg_parser.add_argument('--no-subtotal', dest='show_subtotal', default=True, action='store_false', help='Hides total count per input file')
   count_arg_parser.add_argument('--no-total', dest='show_total', default=True, action='store_false', help='Hides total count across all documents')
   count_arg_parser.add_argument('--no-header', dest='show_header', default=True, action='store_false', help='Hides the field names displayed with more than one field output')
   count_arg_parser.add_argument('--sep', dest='field_sep', default='\t', help='Output field separator')
   count_arg_parser.add_argument('-c', '--cumulative', default=False, action='store_true', help='Show cumulative counts')
+  count_arg_parser.add_argument('files', nargs='*', type=argparse.FileType('rb'), help='Specify files by name rather than standard input')
   arg_parsers = (count_arg_parser, DESERIALISE_AP,)
 
   def __init__(self, argparser, args):
@@ -41,34 +44,50 @@ class CountApp(App):
     elif 1 == len(args.count_stores) + (1 if args.count_docs else 0):
       args.show_header = False
 
-    if not (args.show_interval or args.show_header or args.show_total):
+    if not args.files:
+      args.files = [args.in_stream]
+    if len(args.files) <= 1:
+      args.show_subtotal = False
+
+    if not (args.show_interval or args.show_header or args.show_total or args.show_subtotal):
       argparser.error('Nothing to display')
 
-    if args.cumulative and not args.show_interval:
-      argparser.error('--cumulative may not apply without --each or --every')
+    if args.cumulative and not args.show_interval and not args.show_subtotal:
+      argparser.error('--cumulative may not apply without --every or per-file subtotals')
 
     super(CountApp, self).__init__(argparser, args)
 
   def __call__(self):
-    for i, doc in enumerate(self.stream_reader):
-      if not i:
-        names, extractors = self._get_counters(doc)
-        totals = [0] * len(extractors)
-        if self.args.show_header:
-          print self.args.field_sep.join(names)
+    i = 0
+    for in_file, docs in self.get_stream_readers(*self.args.files):
+      if i and not self.args.cumulative:
+        subtotals = [0] * len(extractors)
+      for doc in docs:
+        if not i:
+          names, extractors = self._get_counters(doc)
+          totals = [0] * len(extractors)
+          subtotals = [0] * len(extractors)
+          if self.args.show_header:
+            print self.args.field_sep.join(names)
 
-      doc_counts = [extract(doc) for extract in extractors]
-      for j, c in enumerate(doc_counts):
-        totals[j] += c
-      if self.args.show_interval and (i + 1) % self.args.show_interval == 0:
-        if self.args.cumulative:
-          print self._fmt_counts(totals)
-        else:
-          print self._fmt_counts(doc_counts)
+        doc_counts = [extract(doc) for extract in extractors]
+        for j, c in enumerate(doc_counts):
+          subtotals[j] += c
+          totals[j] += c
+        if self.args.show_interval and (i + 1) % self.args.show_interval == 0:
+          if self.args.cumulative:
+            print self._fmt_counts(totals)
+          else:
+            print self._fmt_counts(doc_counts)
+
+        i += 1
+
+      if self.args.show_subtotal:
+        print self._fmt_counts(subtotals) + (self.args.field_sep + in_file.name)
 
     try:
       if self.args.show_total:
-        print self._fmt_counts(totals) + (self.args.field_sep + 'TOTAL' if self.args.show_interval else '')
+        print self._fmt_counts(totals) + (self.args.field_sep + 'TOTAL' if self.args.show_interval or self.args.show_subtotal else '')
     except NameError:
       print >> sys.stderr, "No documents to count"
 

@@ -79,6 +79,15 @@ class App(SubParsed):
   def stream_writer(self):
     return Writer(self.args.out_stream)
 
+  @property
+  def raw_stream_reader(self):
+      from .util import read_raw_docs
+      return read_raw_docs(self.args.in_stream)
+
+  @property
+  def raw_stream_writer(self):
+      from .util import RawDocWriter
+      return RawDocWriter(self.args.out_stream)
 
 
 

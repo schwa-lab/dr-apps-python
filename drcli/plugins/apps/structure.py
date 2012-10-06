@@ -159,8 +159,8 @@ class HeadApp(App):
 
   def __call__(self):
     # TODO: avoid desiralising
-    writer = self.stream_writer
-    reader = self.stream_reader
+    writer = self.raw_stream_writer
+    reader = self.raw_stream_reader
     for i, doc in izip(xrange(self.args.skip), reader):
       pass
     for i, doc in izip(xrange(self.args.ndocs), reader):
@@ -180,8 +180,8 @@ class TailApp(App):
   def __call__(self):
     # TODO: avoid desiralising
     # TODO: avoid keeping deserialised objects in memory
-    writer = self.stream_writer
-    reader = self.stream_reader
+    writer = self.raw_stream_writer
+    reader = self.raw_stream_reader
     buf = deque(maxlen=self.args.ndocs + self.args.skip)
     for doc in reader:
       buf.append(doc)

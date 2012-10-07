@@ -5,12 +5,8 @@ import sys
 from operator import attrgetter
 from collections import defaultdict
 from drcli.api import App
+from drcli.util import read_raw_docs
 from drcli.appargs import ArgumentParser, DESERIALISE_AP, argparse
-
-
-def get_store_names(doc):
-  # FIXME: problematic reflection
-  return doc._dr_stores.keys()
 
 
 class CountApp(App):
@@ -59,10 +55,10 @@ class CountApp(App):
 
   def __call__(self):
     i = 0
-    for in_file, docs in self.get_stream_readers(*self.args.files):
+    for in_file in self.args.files:
       if i and not self.args.cumulative:
         subtotals = [0] * len(extractors)
-      for doc in docs:
+      for doc in read_raw_docs(in_file):
         if not i:
           names, extractors = self._get_counters(doc)
           totals = [0] * len(extractors)
@@ -98,7 +94,7 @@ class CountApp(App):
     names = []
     extractors = []
     if self.args.count_all:
-      self.args.count_stores = sorted(get_store_names(doc))
+      self.args.count_stores = sorted(tup[0] for tup in doc.stores)
     if self.args.count_docs:
       names.append('docs')
       extractors.append(self._doc_counter)
@@ -113,11 +109,10 @@ class CountApp(App):
   
   @staticmethod
   def _make_store_counter(attr):
-    get_store = attrgetter(attr)
     def count(doc):
       try:
-        return len(get_store(doc))
-      except AttributeError:
+        return (nelem for name, klass, nelem in doc.stores if name is attr).next()
+      except StopIteration:
         return 0
     return count
 

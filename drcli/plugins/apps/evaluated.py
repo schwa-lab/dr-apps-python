@@ -29,11 +29,11 @@ class FilterApp(App):
 
   def __call__(self):
     evaluator = self.evaluator
-    writer = self.stream_writer
-    for i, doc in enumerate(self.stream_reader):
+    reader, writer = self.stream_reader_writer
+    for i, doc in enumerate(reader):
       if evaluator.as_boolean(doc, i):
         # TODO: avoid re-serialising
-        writer.write_doc(doc)
+        writer.write(doc)
 
 
 class RandomEvaluator(Evaluator):
@@ -58,14 +58,15 @@ class SortApp(App):
   arg_parsers = (get_evaluator_ap({'random': RandomEvaluator}), DESERIALISE_AP, OSTREAM_AP)
 
   def __call__(self):
+    reader, schema = self.get_reader_and_schema()
     tmp_out = StringIO()
-    tmp_writer = dr.Writer(tmp_out)
+    tmp_writer = dr.Writer(tmp_out, schema)
     evaluator = self.evaluator
     items = []
-    for i, doc in enumerate(self.stream_reader):
+    for i, doc in enumerate(reader):
       # TODO: avoid re-serialising
       doc_key = evaluator(doc, i)
-      tmp_writer.write_doc(doc)
+      tmp_writer.write(doc)
       doc_data = tmp_out.getvalue()
       tmp_out.truncate(0)
       items.append((doc_key, doc_data))
@@ -86,14 +87,14 @@ class SetFieldApp(App):
   def __call__(self):
     attr = self.args.field_name
     evaluator = self.evaluator
-    writer = self.stream_writer
-    for i, doc in enumerate(self.stream_reader):
+    reader, writer = self.stream_reader_writer
+    for i, doc in enumerate(reader):
       if attr not in doc._dr_s2p:
         # TODO: externalise reflection methods
         doc._dr_s2p[attr] = attr
         doc._dr_fields[attr] = dr.Field(serial=attr)
       setattr(doc, attr, evaluator(doc, i))
-      writer.write_doc(doc)
+      writer.write(doc)
 
 
 class KFoldsEvaluator(Evaluator):
@@ -123,6 +124,7 @@ class FoldsApp(App):
 
   # TODO: avoid desrialising in the k folds case...?
   def __call__(self):
+    reader, schema = self.get_reader_and_schema()
     writers = {}
     def new_writer(key):
         fold_num = len(writers)
@@ -132,16 +134,16 @@ class FoldsApp(App):
           print >> sys.stderr, 'Path {0} already exists. Use --overwrite to overwrite.'.format(path)
           sys.exit(1)
         print >> sys.stderr, 'Writing fold {k} to {path}'.format(k=fold_num, path=path)
-        return dr.Writer(open(path, 'wb'))
+        return dr.Writer(open(path, 'wb'), schema)
 
     evaluator = self.evaluator
-    for i, doc in enumerate(self.stream_reader):
+    for i, doc in enumerate(reader):
       key = evaluator(doc, i)
       try:
         writer = writers[key]
       except KeyError:
         writer = writers[key] = new_writer(key)
-      writer.write_doc(doc)
+      writer.write(doc)
 
 
 FormatApp.register_name('format')

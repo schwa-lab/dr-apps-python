@@ -50,9 +50,10 @@ class ShellApp(App):
   def build_locals(self):
     res = {'__name__': '__main__'}
     from schwa import dr
-    res.update({'dr': dr, 'docs': dr.Reader(self.args.doc_class).stream(self.args.in_file)})
+    reader, schema = self.get_reader_and_schema(self.args.in_file)
+    res.update({'dr': dr, 'docs': reader})
     if self.args.out_file:
-      res['write_doc'] = dr.Writer(self.args.out_file).write_doc
+      res['write_doc'] = dr.Writer(self.args.out_file, schema).write
     return res
 
   def run_startup(self):

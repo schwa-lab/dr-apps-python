@@ -59,25 +59,31 @@ class App(SubParsed):
   def __call__(self):
     raise NotImplementedError('{0}.__call__ is undefined'.format(self.__class__.__name__))
 
-  @property
-  def stream_reader(self):
-    stream, docs = self.get_stream_readers(self.args.in_stream).next()
-    return docs
-
-  def _read_stream(self, stream, doc_cls, decorate):
-    for doc in Reader(doc_cls).stream(stream):
-      decorate(doc)
-      yield doc
-
-  def get_stream_readers(self, *streams):
+  def get_reader_and_schema(self, stream=None):
+    if stream is None:
+      stream = self.args.in_stream
     doc_cls = getattr(self.args, 'doc_class', None)
     decorate = getattr(doc_cls, DECORATE_METHOD, lambda doc: None)
-    for stream in streams:
-      yield stream, self._read_stream(stream, doc_cls, decorate)
+    reader = Reader(stream, doc_cls, doc_cls is None)
+    def docs():
+      for doc in reader:
+        decorate(doc)
+        yield doc
+    return docs(), reader.doc_schema
 
   @property
-  def stream_writer(self):
-    return Writer(self.args.out_stream)
+  def stream_reader(self):
+    docs, schema = self.get_reader_and_schema()
+    return docs
+
+  @property
+  def stream_reader_writer(self):
+    docs, schema = self.get_reader_and_schema()
+    return docs, Writer(self.args.out_stream, schema)
+
+  def get_stream_readers(self, *streams):
+    for stream in streams:
+      yield stream, self.get_reader_and_schema(stream)[0]
 
   @property
   def raw_stream_reader(self):

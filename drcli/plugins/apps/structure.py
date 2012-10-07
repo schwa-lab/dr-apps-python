@@ -43,8 +43,8 @@ class SelectApp(App):
 
   def __call__(self):
     # FIXME: externalise reflection methods ... or avoid it by just deleting attributes
-    writer = self.stream_writer
-    for doc in self.stream_reader:
+    reader, writer = self.stream_reader_writer
+    for doc in reader:
       for store in doc._dr_stores.itervalues():
         try:
           fields = self.args.annot_fields[store.klass_name]
@@ -54,7 +54,7 @@ class SelectApp(App):
 
       if self.args.doc_fields:
         self._perform(self.args.doc_fields, doc._dr_s2p, doc._dr_fields, doc._dr_stores)
-      writer.write_doc(doc)
+      writer.write(doc)
 
   def _perform_exclude(self, fields, *attr_dicts):
     # FIXME: work for non-identity s2p maps, if necessary
@@ -101,8 +101,8 @@ class RenameApp(App):
 
   def __call__(self):
     # FIXME: externalise reflection methods
-    writer = self.stream_writer
-    for doc in self.stream_reader:
+    reader, writer = self.stream_reader_writer
+    for doc in reader:
       classes = {None: doc.__class__}
       classes.update((store.klass_name, store._klass) for store in doc._dr_stores.itervalues())
       for klass_name, klass in classes.iteritems():
@@ -127,7 +127,7 @@ class RenameApp(App):
         for new, old in relevant:
           fields[old].serial = new
 
-      writer.write_doc(doc)
+      writer.write(doc)
 
 
 class Compose(App):
@@ -164,7 +164,7 @@ class HeadApp(App):
     for i, doc in izip(xrange(self.args.skip), reader):
       pass
     for i, doc in izip(xrange(self.args.ndocs), reader):
-      writer.write_doc(doc)
+      writer.write(doc)
 
 
 class TailApp(App):
@@ -186,7 +186,7 @@ class TailApp(App):
     for doc in reader:
       buf.append(doc)
     for doc in islice(buf, self.args.ndocs):
-      writer.write_doc(doc)
+      writer.write(doc)
 
 
 class GenerateApp(App):
@@ -199,8 +199,8 @@ class GenerateApp(App):
 
   def __call__(self):
     empty = StringIO()
-    writer = dr.Writer(empty)
-    writer.write_doc(dr.Document())
+    writer = dr.Writer(empty, dr.Doc)
+    writer.write(dr.Doc())
     empty = empty.getvalue()
     
     out = self.args.out_stream

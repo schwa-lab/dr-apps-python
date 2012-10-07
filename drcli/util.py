@@ -35,5 +35,5 @@ class RawDocWriter(object):
     def __init__(self, out):
         self.out = out
 
-    def write_doc(self, doc):
+    def write(self, doc):
         write_raw_doc(self.out, doc)

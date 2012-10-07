@@ -3,7 +3,7 @@ import msgpack
 import pprint
 import ast
 from schwa import dr
-from schwa.dr.constants import FIELD_TYPE_NAME, FIELD_TYPE_POINTER_TO, FIELD_TYPE_IS_SLICE
+from schwa.dr.constants import FIELD_TYPE_NAME, FIELD_TYPE_POINTER_TO, FIELD_TYPE_IS_SLICE, FIELD_TYPE_IS_SELF_POINTER
 from drcli.api import App
 from drcli.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP, DESERIALISE_AP
 
@@ -73,6 +73,10 @@ class DumpApp(App):
         pass
       try:
         field['is slice'] = field.pop(FIELD_TYPE_IS_SLICE)
+      except KeyError:
+        pass
+      try:
+        field['is self-pointer'] = field.pop(FIELD_TYPE_IS_SELF_POINTER)
       except KeyError:
         pass
       yield name, field

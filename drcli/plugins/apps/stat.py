@@ -27,7 +27,7 @@ class CountApp(App):
   count_arg_parser.add_argument('--sep', dest='field_sep', default='\t', help='Output field separator')
   count_arg_parser.add_argument('-c', '--cumulative', default=False, action='store_true', help='Show cumulative counts')
   count_arg_parser.add_argument('files', nargs='*', type=argparse.FileType('rb'), help='Specify files by name rather than standard input')
-  arg_parsers = (count_arg_parser, DESERIALISE_AP,)
+  arg_parsers = (count_arg_parser, ISTREAM_AP,)
 
   def __init__(self, argparser, args):
     if args.count_all and (args.count_docs or args.count_stores):
@@ -110,10 +110,10 @@ class CountApp(App):
   @staticmethod
   def _make_store_counter(attr):
     def count(doc):
-      try:
-        return (nelem for name, klass, nelem in doc.stores if name is attr).next()
-      except StopIteration:
-        return 0
+      for name, klass, nelem in doc.stores:
+          if name == attr:
+            return nelem
+      return 0
     return count
 
 

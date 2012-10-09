@@ -210,8 +210,8 @@ class GenerateApp(App):
       i += 1
 
 
-SelectApp.register_name('select')
-RenameApp.register_name('rename')
+###SelectApp.register_name('select')
+###RenameApp.register_name('rename')
 HeadApp.register_name('head')
 TailApp.register_name('tail')
 GenerateApp.register_name('generate')

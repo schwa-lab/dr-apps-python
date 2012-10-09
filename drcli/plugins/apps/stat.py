@@ -147,4 +147,4 @@ class ListStoresApp(App):
 
 
 CountApp.register_name('count')
-ListStoresApp.register_name('ls')
+###ListStoresApp.register_name('ls')

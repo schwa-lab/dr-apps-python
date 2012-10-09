@@ -5,6 +5,8 @@ from schwa.dr.constants import FIELD_TYPE_IS_SLICE
 from drcli.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP
 
 class UpgradeVersionApp(App):
+  """Upgrade wire format"""
+
   MAX_VERSION = 2
   ver_ap = ArgumentParser()
   ver_ap.add_argument('-t', '--target', dest='target_version', metavar='VERSION', default=MAX_VERSION, type=int, help='The target version number')

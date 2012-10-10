@@ -97,7 +97,7 @@ class CountApp(App):
     names = []
     extractors = []
     if self.args.count_all:
-      self.args.count_stores = sorted(get_store_names(stores))
+      self.args.count_stores = sorted(get_store_names(doc))
     if self.args.count_docs:
       names.append('docs')
       extractors.append(self._doc_counter)

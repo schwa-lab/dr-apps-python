@@ -122,9 +122,18 @@ class FoldsApp(App):
       argparser.error('Output path template must include a substitution (e.g. {n:02d} or {key})')
     super(FoldsApp, self).__init__(argparser, args)
 
-  # TODO: avoid desrialising in the k folds case...?
   def __call__(self):
-    reader, schema = self.get_reader_and_schema()
+    evaluator = self.evaluator
+    if isinstance(evaluator, KFoldsEvaluator):
+      # avoid full deserialisation
+      #TODO: make more generic
+      reader = self.raw_stream_reader
+      from drcli.util import RawDocWriter
+      make_writer = RawDocWriter
+    else:
+      reader, schema = self.get_reader_and_schema()
+      make_writer = lambda out: dr.Writer(out, schema)
+
     writers = {}
     def new_writer(key):
         fold_num = len(writers)
@@ -134,9 +143,8 @@ class FoldsApp(App):
           print >> sys.stderr, 'Path {0} already exists. Use --overwrite to overwrite.'.format(path)
           sys.exit(1)
         print >> sys.stderr, 'Writing fold {k} to {path}'.format(k=fold_num, path=path)
-        return dr.Writer(open(path, 'wb'), schema)
+        return make_writer(open(path, 'wb'))
 
-    evaluator = self.evaluator
     for i, doc in enumerate(reader):
       key = evaluator(doc, i)
       try:

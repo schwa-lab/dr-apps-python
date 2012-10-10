@@ -9,6 +9,9 @@ from drcli.util import read_raw_docs
 from drcli.appargs import ArgumentParser, DESERIALISE_AP, argparse
 
 
+def get_store_names(doc):
+    return (tup[0] for tup in doc.stores)
+
 class CountApp(App):
   """
   Count the number of documents or annotations in named stores.
@@ -94,7 +97,7 @@ class CountApp(App):
     names = []
     extractors = []
     if self.args.count_all:
-      self.args.count_stores = sorted(tup[0] for tup in doc.stores)
+      self.args.count_stores = sorted(get_store_names(stores))
     if self.args.count_docs:
       names.append('docs')
       extractors.append(self._doc_counter)
@@ -129,7 +132,7 @@ class ListStoresApp(App):
 
   def __call__(self):
     counter = defaultdict(int)
-    for i, doc in enumerate(self.stream_reader):
+    for i, doc in enumerate(self.raw_stream_reader):
       names = list(get_store_names(doc))
       if self.args.show_each:
         print ' '.join(sorted(names))
@@ -147,4 +150,4 @@ class ListStoresApp(App):
 
 
 CountApp.register_name('count')
-###ListStoresApp.register_name('ls')
+ListStoresApp.register_name('ls')

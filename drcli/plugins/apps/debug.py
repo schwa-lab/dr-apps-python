@@ -62,7 +62,7 @@ class DumpApp(App):
       yield name, {'type': type_name, 'fields': type_fields, 'count': size}
 
   def _process_annot(self, msg, fields):
-    return dict((fields[fnum][FIELD_TYPE_NAME], val) for fnum, val in msg.iteritems())
+    return dict((fields[fnum][FieldType.NAME], val) for fnum, val in msg.iteritems())
 
   TRAIT_NAMES = {
     FieldType.IS_SLICE: 'is slice',
@@ -72,9 +72,9 @@ class DumpApp(App):
 
   def _fields_to_dict(self, fields, store_defs, trait_names=TRAIT_NAMES):
     for field in fields:
-      name = field.pop(FIELD_TYPE_NAME)
+      name = field.pop(FieldType.NAME)
       try:
-        field['points to'], store_data = store_defs[field.pop(FIELD_TYPE_POINTER_TO)]
+        field['points to'], store_data = store_defs[field.pop(FieldType.POINTER_TO)]
       except KeyError:
         pass
       for trait_num, trait_name in trait_names.items():
@@ -172,7 +172,7 @@ class HackHeaderApp(App):
         fields.append({})
 
       for fnum, fdef in enumerate(fields):
-        fname = fdef.get(FIELD_TYPE_NAME)
+        fname = fdef.get(FieldType.NAME)
         if field in (fnum, fname):
           if update:
             fields[fnum].update(value)

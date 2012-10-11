@@ -5,6 +5,7 @@ import ast
 from schwa import dr
 from schwa.dr.constants import FieldType
 from drcli.api import App
+from drcli.util import read_raw_docs
 from drcli.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP, DESERIALISE_AP
 
 META_TYPE = 0
@@ -16,6 +17,7 @@ class DumpApp(App):
   dump_ap = ArgumentParser()
   dump_ap.add_argument('-m', '--human', dest='human_readable', action='store_true', default=False, help='Reinterpret the messages to be more human-readable by integrating headers into content.')
   dump_ap.add_argument('-n', '--numbered', action='store_true', default=False, help='In --human mode, add a \'#\' field to each annotation, indicating its ordinal index')
+  dump_ap.add_argument('-d', '--headers', dest='hide_instances', action='store_true', default=False, help='Show headers only, hiding any instances')
   arg_parsers = (dump_ap, ISTREAM_AP, OSTREAM_AP)
 
   def dump(self, obj):
@@ -25,31 +27,32 @@ class DumpApp(App):
     unpacker = msgpack.Unpacker(self.args.in_stream)
     if self.args.human_readable:
       unpacker = self._integrate_names(unpacker)
+    elif self.args.hide_instances:
+      unpacker = self._headers_only(unpacker)
     for obj in unpacker:
       self.dump(obj)
 
+  def _headers_only(self, unpacker):
+    for doc in read_raw_docs(unpacker):
+      yield doc.version
+      yield doc.klasses
+      yield doc.stores
+
   def _integrate_names(self, unpacker):
-    while True:
+    for doc in read_raw_docs(unpacker):
       obj = {}
-      types = unpacker.unpack()
-      if types is None:
-        # No new header
-        break
-      elif isinstance(types, int):
-        obj['__version__'] = types
-        types = unpacker.unpack()
-      store_defs = list(self._process_store_defs(unpacker.unpack(), types))
-      nbytes = unpacker.unpack()
-      obj['__meta__'] = self._process_annot(unpacker.unpack(), types[META_TYPE][1])
-      for store_name, store in store_defs:
-        nbytes = unpacker.unpack()
-        store['items'] = [self._process_annot(item, store['fields']) for item in unpacker.unpack()]
+      obj['__version__'] = doc.version
+      store_defs = list(self._process_store_defs(doc.stores, doc.klasses))
+      obj['__meta__'] = self._process_annot(doc.doc, doc.klasses[META_TYPE][1])
+      for (store_name, store), instances in zip(store_defs, doc.instances):
+        obj[store_name] = store
+        store['fields'] = dict(self._fields_to_dict(store['fields'], store_defs))
+        if self.args.hide_instances:
+          continue
+        store['items'] = [self._process_annot(item, store['fields']) for item in instances]
         if self.args.numbered:
           for i, item in enumerate(store['items']):
             item['#'] = i
-        store['fields'] = dict(self._fields_to_dict(store['fields'], store_defs))
-        # store.pop('fields')
-        obj[store_name] = store
       yield obj
 
   def _process_store_defs(self, msg, types):
@@ -72,17 +75,18 @@ class DumpApp(App):
 
   def _fields_to_dict(self, fields, store_defs, trait_names=TRAIT_NAMES):
     for field in fields:
-      name = field.pop(FieldType.NAME)
-      try:
-        field['points to'], store_data = store_defs[field.pop(FieldType.POINTER_TO)]
-      except KeyError:
-        pass
-      for trait_num, trait_name in trait_names.items():
-        try:
-          field[trait_name] = field.pop(trait_num)
-        except KeyError:
-          pass
-      yield name, field
+      name = None
+      traits = {}
+      for k, v in field.items():
+        if k == FieldType.NAME:
+          name = v
+        elif k == FieldType.POINTER_TO:
+          traits['points to'], store_data = store_defs[v]
+        elif k in trait_names:
+          traits[trait_names[k]] = v
+        else:
+          traits[k] = v
+      yield name, traits
 
 
 class HackHeaderApp(App):

@@ -46,13 +46,12 @@ class DumpApp(App):
       obj['__meta__'] = self._process_annot(doc.doc, doc.klasses[META_TYPE][1])
       for (store_name, store), instances in zip(store_defs, doc.instances):
         obj[store_name] = store
+        if not self.args.hide_instances:
+          store['items'] = [self._process_annot(item, store['fields']) for item in instances]
+          if self.args.numbered:
+            for i, item in enumerate(store['items']):
+              item['#'] = i
         store['fields'] = dict(self._fields_to_dict(store['fields'], store_defs))
-        if self.args.hide_instances:
-          continue
-        store['items'] = [self._process_annot(item, store['fields']) for item in instances]
-        if self.args.numbered:
-          for i, item in enumerate(store['items']):
-            item['#'] = i
       yield obj
 
   def _process_store_defs(self, msg, types):

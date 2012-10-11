@@ -3,7 +3,7 @@ import msgpack
 import pprint
 import ast
 from schwa import dr
-from schwa.dr.constants import FIELD_TYPE_NAME, FIELD_TYPE_POINTER_TO, FIELD_TYPE_IS_SLICE, FIELD_TYPE_IS_SELF_POINTER
+from schwa.dr.constants import FieldType
 from drcli.api import App
 from drcli.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP, DESERIALISE_AP
 
@@ -64,21 +64,24 @@ class DumpApp(App):
   def _process_annot(self, msg, fields):
     return dict((fields[fnum][FIELD_TYPE_NAME], val) for fnum, val in msg.iteritems())
 
-  def _fields_to_dict(self, fields, store_defs):
+  TRAIT_NAMES = {
+    FieldType.IS_SLICE: 'is slice',
+    FieldType.IS_SELF_POINTER: 'is self-pointer',
+    FieldType.IS_COLLECTION: 'is collection',
+  }
+
+  def _fields_to_dict(self, fields, store_defs, trait_names=TRAIT_NAMES):
     for field in fields:
       name = field.pop(FIELD_TYPE_NAME)
       try:
         field['points to'], store_data = store_defs[field.pop(FIELD_TYPE_POINTER_TO)]
       except KeyError:
         pass
-      try:
-        field['is slice'] = field.pop(FIELD_TYPE_IS_SLICE)
-      except KeyError:
-        pass
-      try:
-        field['is self-pointer'] = field.pop(FIELD_TYPE_IS_SELF_POINTER)
-      except KeyError:
-        pass
+      for trait_num, trait_name in trait_names.items():
+        try:
+          field[trait_name] = field.pop(trait_num)
+        except KeyError:
+          pass
       yield name, field
 
 

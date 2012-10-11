@@ -1,7 +1,7 @@
 from collections import defaultdict
 import itertools
 import msgpack
-from schwa.dr.constants import FIELD_TYPE_IS_SLICE
+from schwa.dr.constants import FieldType
 from drcli.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP
 
 class UpgradeVersionApp(App):
@@ -55,9 +55,9 @@ class UpgradeVersionApp(App):
       if name == '__meta__':
         meta_klass = knum
       for fnum, fdef in enumerate(fields):
-        if fdef.get(FIELD_TYPE_IS_SLICE):
+        if fdef.get(FieldType.IS_SLICE):
           # None is the new True
-          fdef[FIELD_TYPE_IS_SLICE] = None
+          fdef[FieldType.IS_SLICE] = None
           slice_fields[knum].add(fnum)
     yield klasses # changed
     del klasses

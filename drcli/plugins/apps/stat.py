@@ -27,6 +27,7 @@ class CountApp(App):
   count_arg_parser.add_argument('--bytes', dest='count_bytes', action='store_true', default=False, help='Count the number of bytes for each store, rather than the number of elements')
   count_arg_parser.add_argument('--no-subtotal', dest='show_subtotal', default=True, action='store_false', help='Hides total count per input file')
   count_arg_parser.add_argument('--no-total', dest='show_total', default=True, action='store_false', help='Hides total count across all documents')
+  count_arg_parser.add_argument('--average', dest='show_average', default=False, action='store_true', help='Show an average size per document')
   count_arg_parser.add_argument('--no-header', dest='show_header', default=True, action='store_false', help='Hides the field names displayed with more than one field output')
   count_arg_parser.add_argument('--sep', dest='field_sep', default='\t', help='Output field separator')
   count_arg_parser.add_argument('-c', '--cumulative', default=False, action='store_true', help='Show cumulative counts')
@@ -49,7 +50,7 @@ class CountApp(App):
     if len(args.files) <= 1:
       args.show_subtotal = False
 
-    if not (args.show_interval or args.show_header or args.show_total or args.show_subtotal):
+    if not (args.show_interval or args.show_header or args.show_total or args.show_subtotal or args.show_average):
       argparser.error('Nothing to display')
 
     if args.cumulative and not args.show_interval and not args.show_subtotal:
@@ -88,6 +89,8 @@ class CountApp(App):
     try:
       if self.args.show_total:
         print self._fmt_counts(totals) + (self.args.field_sep + 'TOTAL' if self.args.show_interval or self.args.show_subtotal else '')
+      if self.args.show_average:
+        print self._fmt_counts([x / i for x in totals]) + (self.args.field_sep + 'AVERAGE')
     except NameError:
       print >> sys.stderr, "No documents to count"
 

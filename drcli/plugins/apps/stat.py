@@ -6,7 +6,7 @@ from operator import attrgetter
 from collections import defaultdict
 from drcli.api import App
 from drcli.util import read_raw_docs
-from drcli.appargs import ArgumentParser, DESERIALISE_AP, argparse
+from drcli.appargs import ArgumentParser, DESERIALISE_AP, DrInputType
 
 
 def get_store_names(doc):
@@ -31,7 +31,7 @@ class CountApp(App):
   count_arg_parser.add_argument('--no-header', dest='show_header', default=True, action='store_false', help='Hides the field names displayed with more than one field output')
   count_arg_parser.add_argument('--sep', dest='field_sep', default='\t', help='Output field separator')
   count_arg_parser.add_argument('-c', '--cumulative', default=False, action='store_true', help='Show cumulative counts')
-  count_arg_parser.add_argument('files', nargs='*', type=argparse.FileType('rb'), help='Specify files by name rather than standard input')
+  count_arg_parser.add_argument('files', nargs='*', type=DrInputType, help='Specify files by name rather than standard input')
   arg_parsers = (count_arg_parser, ISTREAM_AP,)
 
   def __init__(self, argparser, args):

@@ -115,14 +115,24 @@ class FoldsApp(App):
   multioutput_ap = ArgumentParser()
   multioutput_ap.add_argument('-t', '--template', dest='path_tpl', default='fold{n:03d}.dr', help='A template for output paths (default: %(default)s). {n} substitutes for fold number, {key} for evaluation output.')
   multioutput_ap.add_argument('--overwrite', action='store_true', default=False, help='Overwrite an output file if it already exists.')
-  arg_parsers = (ISTREAM_AP, multioutput_ap, get_evaluator_ap({'k': KFoldsEvaluator}),)
+  multioutput_ap.add_argument('--sparse', action='store_true', default=False, help='Use append mode to write files, and close the handle between writes')
+  multioutput_ap.add_argument('--make-dirs', action='store_true', default=False, help='Make directories when necessary')
+  arg_parsers = (DESERIALISE_AP, multioutput_ap, get_evaluator_ap({'k': KFoldsEvaluator}),)
 
   def __init__(self, argparser, args):
     if '{' not in args.path_tpl:
       argparser.error('Output path template must include a substitution (e.g. {n:02d} or {key})')
     super(FoldsApp, self).__init__(argparser, args)
+    if self.args.sparse:
+      if self.args.overwrite:
+        argparser.error('--overwrite does not apply with --sparse')
+      if isinstance(self.evaluator, KFoldsEvaluator):
+        argparser.error('k-folds cannot be used with --sparse')
+      if any(expr in args.path_tpl for expr in ('{n}', '{n!', '{n:')): # FIXME: use regexp
+        argparser.error('--sparse must use filenames templated by key')
 
   def __call__(self):
+    # TODO: clean up!!
     evaluator = self.evaluator
     if isinstance(evaluator, KFoldsEvaluator):
       # avoid full deserialisation
@@ -134,7 +144,20 @@ class FoldsApp(App):
       reader, schema = self.get_reader_and_schema()
       make_writer = lambda out: dr.Writer(out, schema)
 
-    writers = {}
+    if self.args.make_dirs:
+      def fopen(path, mode):
+        dirname = os.path.dirname(path)
+        if not os.path.exists(dirname):
+          cur = ''
+          for part in dirname.split(os.path.sep):
+            cur += part
+            if part and not os.path.exists(cur):
+              os.mkdir(cur)
+            cur += os.path.sep
+        return open(path, mode)
+    else:
+      fopen = open
+
     def new_writer(key):
         fold_num = len(writers)
         path = self.args.path_tpl.format(n=fold_num, key=key)
@@ -143,14 +166,20 @@ class FoldsApp(App):
           print >> sys.stderr, 'Path {0} already exists. Use --overwrite to overwrite.'.format(path)
           sys.exit(1)
         print >> sys.stderr, 'Writing fold {k} to {path}'.format(k=fold_num, path=path)
-        return make_writer(open(path, 'wb'))
+        return make_writer(fopen(path, 'wb'))
+
+    if self.args.sparse:
+      get_writer = lambda key: make_writer(fopen(self.args.path_tpl.format(key=key), 'ab'))
+    else:
+      writers = {}
+      def get_writer(key):
+        try:
+          writer = writers[key]
+        except KeyError:
+          writer = writers[key] = new_writer(key)
 
     for i, doc in enumerate(reader):
-      key = evaluator(doc, i)
-      try:
-        writer = writers[key]
-      except KeyError:
-        writer = writers[key] = new_writer(key)
+      writer = get_writer(evaluator(doc, i))
       writer.write(doc)
 
 

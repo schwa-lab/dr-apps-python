@@ -24,6 +24,7 @@ class CountApp(App):
   count_arg_parser.add_argument('-a', '--all', dest='count_all', action='store_true', help='Count docs and elements in all stores found on the first document')
   count_arg_parser.add_argument('--every', dest='show_interval', type=int, metavar='N', help='Show counts every N docs')
   count_arg_parser.add_argument('-e', '--every1', dest='show_interval', action='store_const', const=1, help='Show counts every doc')
+  count_arg_parser.add_argument('--bytes', dest='count_bytes', action='store_true', default=False, help='Count the number of bytes for each store, rather than the number of elements')
   count_arg_parser.add_argument('--no-subtotal', dest='show_subtotal', default=True, action='store_false', help='Hides total count per input file')
   count_arg_parser.add_argument('--no-total', dest='show_total', default=True, action='store_false', help='Hides total count across all documents')
   count_arg_parser.add_argument('--no-header', dest='show_header', default=True, action='store_false', help='Hides the field names displayed with more than one field output')
@@ -98,6 +99,8 @@ class CountApp(App):
     extractors = []
     if self.args.count_all:
       self.args.count_stores = sorted(get_store_names(doc))
+      if self.args.count_bytes:
+        self.args.count_stores.insert(0, '__meta__')
     if self.args.count_docs:
       names.append('docs')
       extractors.append(self._doc_counter)
@@ -110,13 +113,24 @@ class CountApp(App):
   def _doc_counter(doc):
     return 1
   
-  @staticmethod
-  def _make_store_counter(attr):
-    def count(doc):
-      for name, klass, nelem in doc.stores:
-          if name == attr:
-            return nelem
-      return 0
+  def _make_store_counter(self, attr):
+    if not self.args.count_bytes:
+      def count(doc):
+        for name, klass, nelem in doc.stores:
+            if name == attr:
+              return nelem
+        return 0
+    else:
+      # TODO: use wire count, relying on Joel's patches to msgpack-python
+      import msgpack
+      def count(doc):
+        if attr == '__meta__':
+          return len(msgpack.packb(doc.doc))
+        for i, (name, klass, nelem) in enumerate(doc.stores):
+            if name == attr:
+              return len(msgpack.packb(doc.instances[i]))
+        return 0
+
     return count
 
 

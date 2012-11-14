@@ -1,6 +1,7 @@
 """
 Apps to get basic statistics and meta-data from documents.
 """
+from __future__ import print_function
 import sys
 from operator import attrgetter
 from collections import defaultdict
@@ -11,6 +12,88 @@ from drcli.appargs import ArgumentParser, DESERIALISE_AP, DrInputType
 
 def get_store_names(doc):
     return (tup[0] for tup in doc.stores)
+
+
+class CountFormatter(object):
+  AGG_SUM = 'sum'
+  AGG_AVG = 'average'
+  ALL = 'all'
+  FILE = 'file'
+  COUNT_BYTES = 'bytes'
+  COUNT_ELEMENTS = 'elements'
+
+  def __init__(self, args, out):
+    self.args = args
+    self.out = out
+
+  def set_fields(self, names):
+    pass
+
+  def add_row(self, counts, ind, agg=None, filename=None, unit=COUNT_ELEMENTS):
+    pass
+
+  def start(self):
+    pass
+
+  def finish(self):
+    pass
+
+
+class CountTableFormatter(CountFormatter):
+  def set_fields(self, names):
+    if self.args.show_header:
+      print(self.args.field_sep.join(names), file=self.out)
+
+  def add_row(self, counts, ind, agg=None, filename=None, unit=CountFormatter.COUNT_ELEMENTS):
+    base = self._fmt_counts(counts)
+    suffix = None
+    if ind == self.FILE:
+      suffix = filename
+    elif ind == self.ALL:
+      if agg == self.AGG_SUM:
+        suffix = 'TOTAL'
+      elif agg == self.AGG_AVG:
+        suffix = 'AVERAGE'
+      else:
+        raise ValueError('Unknown aggregate for total: %r' % agg)
+    print(base + (self.args.field_sep + suffix if suffix else ''), file=self.out)
+
+  def _fmt_counts(self, counts):
+    return self.args.field_sep.join(str(c) for c in counts)
+
+
+class CountJsonFormatter(CountFormatter):
+  def __init__(self, *args, **kwargs):
+    super(CountJsonFormatter, self).__init__(*args, **kwargs)
+    import json
+    self._dumps = json.dumps
+
+  def set_fields(self, names):
+    self._fields = [self._dumps(name) for name in names]
+
+  def add_row(self, counts, ind, agg=None, filename=None, unit=CountFormatter.COUNT_ELEMENTS):
+    if self._row_added:
+      self.out.write(',\n')
+    self.out.write('{')
+    self.out.write(', '.join('%s: %s' % tup for tup in zip(self._fields, counts)))
+    self.out.write(', "_meta": {"after": %s' % self._dumps(ind))
+    if ind == self.FILE:
+        self.out.write(', "file": %s' % self._dumps(filename))
+    if agg:
+        self.out.write(', "agg": %s' % self._dumps(agg))
+    if unit != CountFormatter.COUNT_ELEMENTS:
+        self.out.write(', "unit": %s' % self._dumps(unit))
+    self.out.write('}}')
+    self.out.flush()
+    self._row_added = True
+
+  def start(self):
+    self._row_added = False
+    print('[', file=self.out)
+
+  def finish(self):
+    print('\n]', file=self.out)
+
 
 class CountApp(App):
   """
@@ -28,9 +111,11 @@ class CountApp(App):
   count_arg_parser.add_argument('--no-subtotal', dest='show_subtotal', default=True, action='store_false', help='Hides total count per input file')
   count_arg_parser.add_argument('--no-total', dest='show_total', default=True, action='store_false', help='Hides total count across all documents')
   count_arg_parser.add_argument('--average', dest='show_average', default=False, action='store_true', help='Show an average size per document')
-  count_arg_parser.add_argument('--no-header', dest='show_header', default=True, action='store_false', help='Hides the field names displayed with more than one field output')
-  count_arg_parser.add_argument('--sep', dest='field_sep', default='\t', help='Output field separator')
+  count_arg_parser.add_argument('--no-header', dest='show_header', default=True, action='store_false', help='Hides the field names displayed by --fmt-table with more than one field output')
   count_arg_parser.add_argument('-c', '--cumulative', default=False, action='store_true', help='Show cumulative counts')
+  count_arg_parser.add_argument('--sep', dest='field_sep', default='\t', help='Output field separator (with --fmt-table)')
+  count_arg_parser.add_argument('--fmt-table', dest='formatter_cls', action='store_const', const=CountTableFormatter, default=CountTableFormatter, help='Format output as a table (default)')
+  count_arg_parser.add_argument('--fmt-json', dest='formatter_cls', action='store_const', const=CountJsonFormatter, help='Format output as JSON')
   count_arg_parser.add_argument('files', nargs='*', type=DrInputType, help='Specify files by name rather than standard input')
   arg_parsers = (count_arg_parser, ISTREAM_AP,)
 
@@ -56,9 +141,15 @@ class CountApp(App):
     if args.cumulative and not args.show_interval and not args.show_subtotal:
       argparser.error('--cumulative may not apply without --every or per-file subtotals')
 
+    self.formatter = args.formatter_cls(args, sys.stdout)
+
     super(CountApp, self).__init__(argparser, args)
 
   def __call__(self):
+    consts = CountFormatter
+    unit = consts.COUNT_BYTES if self.args.count_bytes else consts.COUNT_ELEMENTS
+    self.formatter.start()
+
     i = 0
     for in_file in self.args.files:
       if i and not self.args.cumulative:
@@ -68,8 +159,7 @@ class CountApp(App):
           names, extractors = self._get_counters(doc)
           totals = [0] * len(extractors)
           subtotals = [0] * len(extractors)
-          if self.args.show_header:
-            print self.args.field_sep.join(names)
+          self.formatter.set_fields(names)
 
         doc_counts = [extract(doc) for extract in extractors]
         for j, c in enumerate(doc_counts):
@@ -77,25 +167,23 @@ class CountApp(App):
           totals[j] += c
         if self.args.show_interval and (i + 1) % self.args.show_interval == 0:
           if self.args.cumulative:
-            print self._fmt_counts(totals)
+            self.formatter.add_row(totals, i, agg=conts.AGG_SUM, filename=in_file.name, unit=unit)
           else:
-            print self._fmt_counts(doc_counts)
+            self.formatter.add_row(doc_counts, i, filename=in_file.name, unit=unit)
 
         i += 1
 
       if self.args.show_subtotal:
-        print self._fmt_counts(subtotals) + (self.args.field_sep + in_file.name)
+        self.formatter.add_row(totals, consts.FILE, agg=consts.AGG_SUM, filename=in_file.name, unit=unit)
 
     try:
       if self.args.show_total:
-        print self._fmt_counts(totals) + (self.args.field_sep + 'TOTAL' if self.args.show_interval or self.args.show_subtotal else '')
+        self.formatter.add_row(totals, consts.ALL, agg=consts.AGG_SUM, unit=unit)
       if self.args.show_average:
-        print self._fmt_counts([x / i for x in totals]) + (self.args.field_sep + 'AVERAGE')
+        self.formatter.add_row([x / i for x in totals], consts.ALL, agg=consts.AGG_AVG, unit=unit)
     except NameError:
-      print >> sys.stderr, "No documents to count"
-
-  def _fmt_counts(self, counts):
-    return self.args.field_sep.join(str(c) for c in counts)
+      print("No documents to count", file=sys.stderr)
+    self.formatter.finish()
   
   def _get_counters(self, doc):
     names = []
@@ -152,7 +240,7 @@ class ListStoresApp(App):
     for i, doc in enumerate(self.raw_stream_reader):
       names = list(get_store_names(doc))
       if self.args.show_each:
-        print ' '.join(sorted(names))
+        print(' '.join(sorted(names)))
       for name in names:
         counter[name] += 1
     try:
@@ -161,9 +249,9 @@ class ListStoresApp(App):
       else:
         fmt = '{name}\t{count}'
     except NameError:
-      print >> sys.stderr, "No documents found"
+      print("No documents found", out=sys.stderr)
     for k, v in sorted(counter.items(), key=lambda (k, v): (-v, k)):
-      print fmt.format(name=k, count=v)
+      print(fmt.format(name=k, count=v))
 
 
 CountApp.register_name('count')

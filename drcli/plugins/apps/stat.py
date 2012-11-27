@@ -115,7 +115,7 @@ class CountApp(App):
   count_arg_parser.add_argument('-c', '--cumulative', default=False, action='store_true', help='Show cumulative counts')
   count_arg_parser.add_argument('--sep', dest='field_sep', default='\t', help='Output field separator (with --fmt-table)')
   count_arg_parser.add_argument('--fmt-table', dest='formatter_cls', action='store_const', const=CountTableFormatter, default=CountTableFormatter, help='Format output as a table (default)')
-  count_arg_parser.add_argument('--fmt-json', dest='formatter_cls', action='store_const', const=CountJsonFormatter, help='Format output as JSON')
+  count_arg_parser.add_argument('-j', '--fmt-json', dest='formatter_cls', action='store_const', const=CountJsonFormatter, help='Format output as JSON')
   count_arg_parser.add_argument('files', nargs='*', type=DrInputType, help='Specify files by name rather than standard input')
   arg_parsers = (count_arg_parser, ISTREAM_AP,)
 
@@ -167,7 +167,7 @@ class CountApp(App):
           totals[j] += c
         if self.args.show_interval and (i + 1) % self.args.show_interval == 0:
           if self.args.cumulative:
-            self.formatter.add_row(totals, i, agg=conts.AGG_SUM, filename=in_file.name, unit=unit)
+            self.formatter.add_row(totals, i, agg=consts.AGG_SUM, filename=in_file.name, unit=unit)
           else:
             self.formatter.add_row(doc_counts, i, filename=in_file.name, unit=unit)
 

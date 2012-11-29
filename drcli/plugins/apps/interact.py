@@ -2,7 +2,7 @@
 import os
 from brownie.importing import import_string
 from drcli.api import App, DECORATE_METHOD
-from drcli.appargs import ArgumentParser, argparse
+from drcli.appargs import ArgumentParser, argparse, DrInputType
 
 
 class ShellApp(App):
@@ -16,7 +16,7 @@ class ShellApp(App):
   ap.add_argument('-o', '--out-file', type=argparse.FileType('wb'), default=None, help='The output file, written to by `write_doc`')
   ap.add_argument('-c', '--code', default=None, help='Execute the specified code (before opening an interactive session if -i is also used)')
   ap.add_argument('-i', '--interactive', default=False, action='store_true', help='Use an interactive shell even if -c is supplied')
-  ap.add_argument('in_file', type=argparse.FileType('rb'), nargs='?', default=None, help='The input file')
+  ap.add_argument('in_file', type=DrInputType, nargs='?', default=None, help='The input file')
   arg_parsers = (ap,)
 
   def __init__(self, argparser, args):

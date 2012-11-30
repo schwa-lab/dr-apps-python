@@ -5,6 +5,7 @@ from __future__ import print_function
 import sys
 from operator import attrgetter
 from collections import defaultdict
+import datetime
 from drcli.api import App
 from drcli.util import read_raw_docs
 from drcli.appargs import ArgumentParser, DESERIALISE_AP, DrInputType
@@ -12,6 +13,9 @@ from drcli.appargs import ArgumentParser, DESERIALISE_AP, DrInputType
 
 def get_store_names(doc):
     return (tup[0] for tup in doc.stores)
+
+def iso_now():
+    return datetime.datetime.now().isoformat()
 
 
 class CountFormatter(object):
@@ -42,7 +46,10 @@ class CountFormatter(object):
 class CountTableFormatter(CountFormatter):
   def set_fields(self, names):
     if self.args.show_header:
-      print(self.args.field_sep.join(names), file=self.out)
+      header = self.args.field_sep.join(names)
+      if self.args.timestamp:
+        header = iso_now() + self.args.field_sep
+      print(header, file=self.out)
 
   def add_row(self, counts, ind, agg=None, filename=None, unit=CountFormatter.COUNT_ELEMENTS):
     base = self._fmt_counts(counts)
@@ -59,7 +66,10 @@ class CountTableFormatter(CountFormatter):
     print(base + (self.args.field_sep + suffix if suffix else ''), file=self.out)
 
   def _fmt_counts(self, counts):
-    return self.args.field_sep.join(str(c) for c in counts)
+    res = self.args.field_sep.join(str(c) for c in counts)
+    if self.args.timestamp:
+      res = iso_now() + self.args.field_sep + res
+    return res
 
 
 class CountJsonFormatter(CountFormatter):
@@ -78,11 +88,13 @@ class CountJsonFormatter(CountFormatter):
     self.out.write(', '.join('%s: %s' % tup for tup in zip(self._fields, counts)))
     self.out.write(', "_meta": {"after": %s' % self._dumps(ind))
     if ind == self.FILE:
-        self.out.write(', "file": %s' % self._dumps(filename))
+      self.out.write(', "file": %s' % self._dumps(filename))
     if agg:
-        self.out.write(', "agg": %s' % self._dumps(agg))
+      self.out.write(', "agg": %s' % self._dumps(agg))
     if unit != CountFormatter.COUNT_ELEMENTS:
-        self.out.write(', "unit": %s' % self._dumps(unit))
+      self.out.write(', "unit": %s' % self._dumps(unit))
+    if self.args.timestamp:
+      self.out.write(', "time": %s' % self._dumps(iso_now()))
     self.out.write('}}')
     self.out.flush()
     self._row_added = True
@@ -105,7 +117,7 @@ class CountApp(App):
   count_arg_parser.add_argument('-s', '--store', metavar='ATTR', dest='count_stores', action='append', default=[], help='Count the specified store')
   count_arg_parser.add_argument('-d', '--docs', dest='count_docs', action='store_true', help='Count the number of documents (default without fields specified)')
   count_arg_parser.add_argument('-a', '--all', dest='count_all', action='store_true', help='Count docs and elements in all stores found on the first document')
-  count_arg_parser.add_argument('--every', dest='show_interval', type=int, metavar='N', help='Show counts every N docs')
+  count_arg_parser.add_argument('-v', '--every', dest='show_interval', type=int, metavar='N', help='Show counts every N docs')
   count_arg_parser.add_argument('-e', '--every1', dest='show_interval', action='store_const', const=1, help='Show counts every doc')
   count_arg_parser.add_argument('--bytes', dest='count_bytes', action='store_true', default=False, help='Count the number of bytes for each store, rather than the number of elements')
   count_arg_parser.add_argument('--no-subtotal', dest='show_subtotal', default=True, action='store_false', help='Hides total count per input file')
@@ -113,6 +125,7 @@ class CountApp(App):
   count_arg_parser.add_argument('--average', dest='show_average', default=False, action='store_true', help='Show an average size per document')
   count_arg_parser.add_argument('--no-header', dest='show_header', default=True, action='store_false', help='Hides the field names displayed by --fmt-table with more than one field output')
   count_arg_parser.add_argument('-c', '--cumulative', default=False, action='store_true', help='Show cumulative counts')
+  count_arg_parser.add_argument('-t', '--timestamp', action='store_true', default=False, help='Output the time with each count')
   count_arg_parser.add_argument('--sep', dest='field_sep', default='\t', help='Output field separator (with --fmt-table)')
   count_arg_parser.add_argument('--fmt-table', dest='formatter_cls', action='store_const', const=CountTableFormatter, default=CountTableFormatter, help='Format output as a table (default)')
   count_arg_parser.add_argument('-j', '--fmt-json', dest='formatter_cls', action='store_const', const=CountJsonFormatter, help='Format output as JSON')

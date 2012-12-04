@@ -34,6 +34,7 @@ class _SliceFormatter(object):
     self.get_slice_data = attrgetter(rev_attr)
     self.get_value = attrgetter(sub_attr)
 
+
 class _IOB(_SliceFormatter):
   IOB1 = REPEAT_B = 1
   IOB2 = ALWAYS_B = 2
@@ -114,6 +115,11 @@ class SetCandcAction(argparse.Action):
     namespace.clean_field = lambda s: s.replace(' ', '_')
 
 
+class _SuperSentence(object):
+    """Mimicks a sentence for the --ignore-sents option"""
+    span = slice(None, None)
+
+
 class WriteConll(App):
   """Writes documents in CONLL format, or a format which similarly lists fields separated by some delimiter.
   
@@ -127,6 +133,7 @@ class WriteConll(App):
   annotations_ap.add_argument('--tok-store', dest='get_tokens', default=attrgetter('tokens'), type=attrgetter, help='Specify a particular Token store (default: tokens)')
   annotations_ap.add_argument('--sent-store', dest='get_sentences', default=attrgetter('sentences'), type=attrgetter, help='Specify a particular Sentence store (default: sentences)')
   annotations_ap.add_argument('--sent-tok-slice', dest='get_sent_tok_slice', default=attrgetter('span'), type=attrgetter, help='The field on Sentence objects which indicates its slice over tokens (default: span)')
+  annotations_ap.add_argument('--ignore-sents', dest='get_sentences', action='store_const', const=lambda doc: (_SuperSentence(),), help='List all tokens as if in a single sentence')
 
   # TODO: use streams instead of string operations
   formatting_ap = ArgumentParser()

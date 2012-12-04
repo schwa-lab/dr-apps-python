@@ -153,8 +153,10 @@ class HeadApp(App):
   """
   # TODO: handle multiple input sources
   head_arg_parser = ArgumentParser()
-  head_arg_parser.add_argument('-n', '--ndocs', metavar='COUNT', type=int, default=1, help='The number of documents to extract (default: %(default)s)')
-  head_arg_parser.add_argument('--skip', type=int, default=0, help='The number of documents to skip before extracting')
+  _me_group = head_arg_parser.add_mutually_exclusive_group()
+  _me_group.add_argument('-n', '--ndocs', metavar='COUNT', type=int, default=1, help='The number of documents to extract (default: %(default)s)')
+  _me_group.add_argument('-i', '--infinite', dest='ndocs', action='store_const', const=None, help='Extract all documents after the skipped portion, for functionality comparable to unix\'s tail -n+N')
+  head_arg_parser.add_argument('-s', '--skip', type=int, default=0, help='The number of documents to skip before extracting')
   arg_parsers = (head_arg_parser, ISTREAM_AP, OSTREAM_AP)
 
   def __call__(self):
@@ -163,7 +165,11 @@ class HeadApp(App):
     reader = self.raw_stream_reader
     for i, doc in izip(xrange(self.args.skip), reader):
       pass
-    for i, doc in izip(xrange(self.args.ndocs), reader):
+    if self.args.ndocs is None:
+      docs = enumerate(reader)
+    else:
+      docs = izip(xrange(self.args.ndocs), reader)
+    for i, doc in docs:
       writer.write(doc)
 
 
@@ -174,7 +180,7 @@ class TailApp(App):
   # TODO: handle multiple input sources
   tail_arg_parser = ArgumentParser()
   tail_arg_parser.add_argument('-n', '--ndocs', metavar='COUNT', type=int, default=1, help='The number of documents to extract (default: %(default)s)')
-  tail_arg_parser.add_argument('--skip', type=int, default=0, help='The number of documents to skip after extracting')
+  tail_arg_parser.add_argument('-s', '--skip', type=int, default=0, help='The number of documents to skip after extracting')
   arg_parsers = (tail_arg_parser, ISTREAM_AP, OSTREAM_AP)
 
   def __call__(self):

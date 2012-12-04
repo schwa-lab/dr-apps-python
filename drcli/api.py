@@ -1,4 +1,5 @@
-import sys
+import textwrap
+import argparse
 from schwa.dr import Reader
 from schwa.dr import Writer
 
@@ -28,8 +29,8 @@ class SubParsed(object):
 def add_subparsers(parser, library, cls_arg, **kwargs):
   subparsers = parser.add_subparsers(**kwargs)
   for name, cls in library:
-    doc = cls.__doc__ or ''
-    subp = subparsers.add_parser(name, parents=cls.get_arg_parsers(), help=doc.strip().split('\n')[0], description=doc)
+    doc = textwrap.dedent(cls.__doc__ or '')
+    subp = subparsers.add_parser(name, parents=cls.get_arg_parsers(), help=doc.strip().split('\n')[0], description=doc, formatter_class=argparse.RawDescriptionHelpFormatter)
     subp.set_defaults(**{cls_arg: cls})
 
 

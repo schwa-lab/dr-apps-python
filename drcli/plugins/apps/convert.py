@@ -131,7 +131,7 @@ class WriteConll(App):
   """Writes documents in CONLL format, or a format which similarly lists fields separated by some delimiter.
   
   Example invocation:
-  `cat docs.dr | dr conll --doc-model some.module.Document --norm -f pos --iob1 chunk.tag`
+  `cat docs.dr | dr conll --doc-class some.module.Document --norm -f pos --iob1 chunk.tag`
   For `--iob1 'chunk.tag'` to work, this assumes some.module.Document.drcli_decorate includes the following decoration:
     reverse_slices('chunks', 'tokens', 'span', all_attr='chunk')
   """

@@ -3,12 +3,11 @@ Apps to get basic statistics and meta-data from documents.
 """
 from __future__ import print_function
 import sys
-from operator import attrgetter
 from collections import defaultdict
 import datetime
 from drcli.api import App
 from drcli.util import read_raw_docs
-from drcli.appargs import ArgumentParser, DESERIALISE_AP, DrInputType
+from drcli.appargs import ArgumentParser, ISTREAM_AP, DESERIALISE_AP, DrInputType
 
 
 def get_store_names(doc):
@@ -110,12 +109,34 @@ class CountJsonFormatter(CountFormatter):
 class CountApp(App):
   """
   Count the number of documents or annotations in named stores.
+  
+  Examples:
+    %(prog)s
+        # display the number of documents found on standard input
+    %(prog)s *.dr
+        # list the number of documents in each .dr file and their total
+    %(prog)s -a
+        # display the number of elements in each store
+    %(prog)s -s tokens
+        # display the total number of elements in the 'tokens' store
+    %(prog)s -ds tokens
+        # same with document count
+    %(prog)s -ds tokens -s sentences
+        # same with number of 'sentences' elements
+    %(prog)s -ea
+        # display the number of elements in each store per document
+    %(prog)s -eac
+        # display the cumulative number of elements in each store per document
+    %(prog)s -eacj
+        # the same with output in JSON rather than a table
+    %(prog)s -tcv10
+        # every 10 documents, display the time and number of documents processed
+    %(prog)s -aj --average --bytes
+        # display as JSON the average and total number of bytes consumed by each store
   """
-  # TODO: options to choose stores to count
-  # TODO: avoid desiralising?
   count_arg_parser = ArgumentParser()
   count_arg_parser.add_argument('-s', '--store', metavar='ATTR', dest='count_stores', action='append', default=[], help='Count the specified store')
-  count_arg_parser.add_argument('-d', '--docs', dest='count_docs', action='store_true', help='Count the number of documents (default without fields specified)')
+  count_arg_parser.add_argument('-d', '--docs', dest='count_docs', action='store_true', help='Count the number of documents (default without stores specified)')
   count_arg_parser.add_argument('-a', '--all', dest='count_all', action='store_true', help='Count docs and elements in all stores found on the first document')
   count_arg_parser.add_argument('-v', '--every', dest='show_interval', type=int, metavar='N', help='Show counts every N docs')
   count_arg_parser.add_argument('-e', '--every1', dest='show_interval', action='store_const', const=1, help='Show counts every doc')

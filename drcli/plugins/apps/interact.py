@@ -6,9 +6,20 @@ from drcli.appargs import ArgumentParser, argparse, DrInputType
 
 
 class ShellApp(App):
-  """Loads the given input file into a Python shell as the variable `docs`"""
-  # TODO: support -c, -i: -c should have access to docs, but precede startup scripts run with -i
+  """
+  Loads the given input file into a Python shell as the variable `docs`
+  
+  Examples:
+    %(prog)s -c 'for doc in docs: do_something()'
+        # executes the given code on `docs` read with automagic from standard input
+    %(prog)s -o out.dr -c 'for doc in docs: do_something() and write_doc(doc)'
+        # same, writing the documents to out.dr
+    %(prog)s path.dr
+        # open an interactive Python shell with `docs` read from path.dr with automagic
+    %(prog)s --doc-class pkg.module.DocSchema path.dr
+        # same, but using the specified schema
 
+  """
   SHELLS = ('ipython', 'bpython', 'python')
   ap = ArgumentParser()
   ap.add_argument('-s', '--shell', default=None, help='One of {0} (default: try these in order)'.format(SHELLS))

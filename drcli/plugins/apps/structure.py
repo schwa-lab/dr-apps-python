@@ -149,7 +149,13 @@ class CatApp(App):
 
 class HeadApp(App):
   """
-  Extract the first n documents.
+  Extract the first n documents, optionally after a skipped quantity.
+  
+  Examples:
+    %(prog)s           # extract the first document from STDIN
+    %(prog)s -n5       # extract the first five documents
+    %(prog)s -s5 -n5   # extract the 6th to 10th documents
+    %(prog)s -is5      # extract all but the first 5 documents
   """
   # TODO: handle multiple input sources
   head_arg_parser = ArgumentParser()
@@ -176,6 +182,10 @@ class HeadApp(App):
 class TailApp(App):
   """
   Extract the last n documents.
+
+  Examples:
+    %(prog)s          # extract the last document
+    %(prog)s -n5      # extract the last five documents
   """
   # TODO: handle multiple input sources
   tail_arg_parser = ArgumentParser()

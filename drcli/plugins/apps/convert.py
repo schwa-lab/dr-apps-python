@@ -103,7 +103,14 @@ def get_raw(tok):
   return tok.raw or tok.norm
 
 
-fmt_separator = lambda sep: lambda items: sep.join(items)
+def fmt_separator(sep):
+  def join_gen(items):
+    items = iter(items)
+    yield items.next()
+    for item in items:
+      yield sep
+      yield item
+  return join_gen
 
 
 class SetCandcAction(argparse.Action):
@@ -165,7 +172,14 @@ class WriteConll(App):
     super(WriteConll, self).__init__(argparser, args)
 
   def __call__(self):
-    sys.stdout.write(self.args.fmt_docs(self.process_doc(doc) for doc in self.stream_reader))
+    self.write_flattened(sys.stdout.write, self.args.fmt_docs(self.process_doc(doc) for doc in self.stream_reader))
+
+  def write_flattened(self, write, iterable):
+    for fragment in iterable:
+      if isinstance(fragment, basestring):
+        write(fragment)
+      else:
+        self.write_flattened(write, fragment)
 
   def process_doc(self, doc):
     token_store = self.args.get_tokens(doc)

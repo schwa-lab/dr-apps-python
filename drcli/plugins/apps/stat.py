@@ -208,7 +208,7 @@ class CountApp(App):
         i += 1
 
       if self.args.show_subtotal:
-        self.formatter.add_row(totals, consts.FILE, agg=consts.AGG_SUM, filename=in_file.name, unit=unit)
+        self.formatter.add_row(subtotals, consts.FILE, agg=consts.AGG_SUM, filename=in_file.name, unit=unit)
 
     try:
       if self.args.show_total:

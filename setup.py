@@ -11,10 +11,14 @@ setup(name='drcli',
       author = 'schwa lab',
       url='http://schwa.org/git/drcli.git',
       packages=['drcli'],
-      scripts=['dr'],
       install_requires=['argparse', 'brownie'],
       package_data = {
         'drcli': ['plugins/*/*.py'],
+      },
+      entry_points = {      
+        'console_scripts': [
+            'dr = drcli.__main__:main',
+        ]
       },
       setup_requires=['setuptools_git'],
       license='Apache 2.0',

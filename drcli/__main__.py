@@ -13,7 +13,7 @@ def load_plugins(dir):
       imp.load_source('arbitrary', os.path.join(dir, f))
 
 
-def main(args):
+def main(args=sys.argv[1:]):
   load_plugins(os.path.join(os.path.dirname(__file__), 'plugins/evaluators'))
   load_plugins(os.path.join(os.path.dirname(__file__), 'plugins/apps'))
   parser = argparse.ArgumentParser()

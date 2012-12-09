@@ -182,9 +182,13 @@ class SubsetApp(App):
     if None in starts:
       starts.add(0)
     stops = {sl.stop for sl in slices}
+    if None in stops:
+      pairs = enumerate(it)
+    else:
+      pairs = izip(xrange(max(stops)), it)
 
     yielding = False
-    for i, obj in enumerate(it):
+    for i, obj in pairs:
       yielding = (yielding and i not in stops) or i in starts
       if yielding:
         yield obj

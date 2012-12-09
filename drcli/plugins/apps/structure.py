@@ -147,7 +147,60 @@ class CatApp(App):
   # TODO: avoid deserialising
 
 
-class HeadApp(App):
+def subset_type(str_val):
+    if ':' not in str_val:
+      val = int(str_val)
+      return slice(val, val + 1)
+    start, stop = str_val.split(':')
+    if start:
+      start = int(start)
+    else:
+      start = 0
+    if stop:
+      stop = int(stop)
+    else:
+      stop = None
+    return slice(start, stop)
+
+
+class SubsetApp(App):
+  """
+  Extract documents by non-negative index or slice (a generalisation of head).
+
+  Behaviour is undefined for overlapping slices.
+  """
+  arg_parser = ArgumentParser()
+  arg_parser.add_argument('slices', nargs='+', type=subset_type, help='Non-negative slices in Python-like notation, e.g. 0, 5, :10, 5:10, 5:')
+  arg_parsers = (arg_parser, ISTREAM_AP, OSTREAM_AP)
+
+  @staticmethod
+  def gen_subsets(it, *slices):
+    if not slices:
+      for obj in it:
+        yield obj
+    starts = {sl.start for sl in slices}
+    if None in starts:
+      starts.add(0)
+    stops = {sl.stop for sl in slices}
+
+    yielding = False
+    for i, obj in enumerate(it):
+      yielding = (yielding and i not in stops) or i in starts
+      if yielding:
+        yield obj
+
+  def _run(self, *slices):
+    # TODO: avoid desiralising
+    writer = self.raw_stream_writer
+    reader = self.raw_stream_reader
+    for doc in self.gen_subsets(reader, *slices):
+      writer.write(doc)
+
+  def __call__(self):
+    self._run(*self.args.slices)
+
+
+class HeadApp(SubsetApp):
   """
   Extract the first n documents.
   """
@@ -158,13 +211,7 @@ class HeadApp(App):
   arg_parsers = (head_arg_parser, ISTREAM_AP, OSTREAM_AP)
 
   def __call__(self):
-    # TODO: avoid desiralising
-    writer = self.raw_stream_writer
-    reader = self.raw_stream_reader
-    for i, doc in izip(xrange(self.args.skip), reader):
-      pass
-    for i, doc in izip(xrange(self.args.ndocs), reader):
-      writer.write(doc)
+    self._run(slice(self.args.skip, self.args.skip + self.args.ndocs))
 
 
 class TailApp(App):
@@ -214,4 +261,5 @@ class GenerateApp(App):
 ###RenameApp.register_name('rename')
 HeadApp.register_name('head')
 TailApp.register_name('tail')
+SubsetApp.register_name('subset')
 GenerateApp.register_name('generate')

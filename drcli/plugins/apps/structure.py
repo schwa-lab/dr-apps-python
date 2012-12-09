@@ -202,26 +202,38 @@ class SubsetApp(App):
 
 class HeadApp(SubsetApp):
   """
-  Extract the first n documents.
+  Extract the first n documents, optionally after a skipped quantity.
+  
+  Examples:
+    %(prog)s           # extract the first document from STDIN
+    %(prog)s -n5       # extract the first five documents
+    %(prog)s -s5 -n5   # extract the 6th to 10th documents
+    %(prog)s -is5      # extract all but the first 5 documents
   """
   # TODO: handle multiple input sources
   head_arg_parser = ArgumentParser()
-  head_arg_parser.add_argument('-n', '--ndocs', metavar='COUNT', type=int, default=1, help='The number of documents to extract (default: %(default)s)')
-  head_arg_parser.add_argument('--skip', type=int, default=0, help='The number of documents to skip before extracting')
+  _me_group = head_arg_parser.add_mutually_exclusive_group()
+  _me_group.add_argument('-n', '--ndocs', metavar='COUNT', type=int, default=1, help='The number of documents to extract (default: %(default)s)')
+  _me_group.add_argument('-i', '--infinite', dest='ndocs', action='store_const', const=None, help='Extract all documents after the skipped portion, for functionality comparable to unix\'s tail -n+N')
+  head_arg_parser.add_argument('-s', '--skip', type=int, default=0, help='The number of documents to skip before extracting')
   arg_parsers = (head_arg_parser, ISTREAM_AP, OSTREAM_AP)
 
   def __call__(self):
-    self._run(slice(self.args.skip, self.args.skip + self.args.ndocs))
+    self._run(slice(self.args.skip, None if self.args.infinite else self.args.skip + self.args.ndocs))
 
 
 class TailApp(App):
   """
   Extract the last n documents.
+
+  Examples:
+    %(prog)s          # extract the last document
+    %(prog)s -n5      # extract the last five documents
   """
   # TODO: handle multiple input sources
   tail_arg_parser = ArgumentParser()
   tail_arg_parser.add_argument('-n', '--ndocs', metavar='COUNT', type=int, default=1, help='The number of documents to extract (default: %(default)s)')
-  tail_arg_parser.add_argument('--skip', type=int, default=0, help='The number of documents to skip after extracting')
+  tail_arg_parser.add_argument('-s', '--skip', type=int, default=0, help='The number of documents to skip after extracting')
   arg_parsers = (tail_arg_parser, ISTREAM_AP, OSTREAM_AP)
 
   def __call__(self):

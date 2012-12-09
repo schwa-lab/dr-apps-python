@@ -2,13 +2,24 @@
 import os
 from brownie.importing import import_string
 from drcli.api import App, DECORATE_METHOD
-from drcli.appargs import ArgumentParser, argparse
+from drcli.appargs import ArgumentParser, argparse, DrInputType
 
 
 class ShellApp(App):
-  """Loads the given input file into a Python shell as the variable `docs`"""
-  # TODO: support -c, -i: -c should have access to docs, but precede startup scripts run with -i
+  """
+  Loads the given input file into a Python shell as the variable `docs`
+  
+  Examples:
+    %(prog)s -c 'for doc in docs: do_something()'
+        # executes the given code on `docs` read with automagic from standard input
+    %(prog)s -o out.dr -c 'for doc in docs: do_something() and write_doc(doc)'
+        # same, writing the documents to out.dr
+    %(prog)s path.dr
+        # open an interactive Python shell with `docs` read from path.dr with automagic
+    %(prog)s --doc-class pkg.module.DocSchema path.dr
+        # same, but using the specified schema
 
+  """
   SHELLS = ('ipython', 'bpython', 'python')
   ap = ArgumentParser()
   ap.add_argument('-s', '--shell', default=None, help='One of {0} (default: try these in order)'.format(SHELLS))
@@ -16,7 +27,7 @@ class ShellApp(App):
   ap.add_argument('-o', '--out-file', type=argparse.FileType('wb'), default=None, help='The output file, written to by `write_doc`')
   ap.add_argument('-c', '--code', default=None, help='Execute the specified code (before opening an interactive session if -i is also used)')
   ap.add_argument('-i', '--interactive', default=False, action='store_true', help='Use an interactive shell even if -c is supplied')
-  ap.add_argument('in_file', type=argparse.FileType('rb'), nargs='?', default=None, help='The input file')
+  ap.add_argument('in_file', type=DrInputType, nargs='?', default=None, help='The input file')
   arg_parsers = (ap,)
 
   def __init__(self, argparser, args):

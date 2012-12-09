@@ -6,7 +6,7 @@ from functools import partial
 from brownie.importing import import_string
 from .api import DECORATE_METHOD
 
-ArgumentParser = partial(argparse.ArgumentParser, add_help=False)
+ArgumentParser = partial(argparse.ArgumentParser, add_help=False, formatter_class=argparse.RawDescriptionHelpFormatter)
 
 class SuffixDependentType(object):
   def __init__(self, suffix_fns):

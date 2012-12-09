@@ -34,6 +34,7 @@ class _SliceFormatter(object):
     self.get_slice_data = attrgetter(rev_attr)
     self.get_value = attrgetter(sub_attr)
 
+
 class _IOB(_SliceFormatter):
   IOB1 = REPEAT_B = 1
   IOB2 = ALWAYS_B = 2
@@ -102,7 +103,14 @@ def get_raw(tok):
   return tok.raw or tok.norm
 
 
-fmt_separator = lambda sep: lambda items: sep.join(items)
+def fmt_separator(sep):
+  def join_gen(items):
+    items = iter(items)
+    yield items.next()
+    for item in items:
+      yield sep
+      yield item
+  return join_gen
 
 
 class SetCandcAction(argparse.Action):
@@ -114,11 +122,16 @@ class SetCandcAction(argparse.Action):
     namespace.clean_field = lambda s: s.replace(' ', '_')
 
 
+class _SuperSentence(object):
+    """Mimicks a sentence for the --ignore-sents option"""
+    span = slice(None, None)
+
+
 class WriteConll(App):
   """Writes documents in CONLL format, or a format which similarly lists fields separated by some delimiter.
   
   Example invocation:
-  `cat docs.dr | dr conll --doc-model some.module.Document --norm -f pos --iob1 chunk.tag`
+  `cat docs.dr | dr conll --doc-class some.module.Document --norm -f pos --iob1 chunk.tag`
   For `--iob1 'chunk.tag'` to work, this assumes some.module.Document.drcli_decorate includes the following decoration:
     reverse_slices('chunks', 'tokens', 'span', all_attr='chunk')
   """
@@ -127,6 +140,7 @@ class WriteConll(App):
   annotations_ap.add_argument('--tok-store', dest='get_tokens', default=attrgetter('tokens'), type=attrgetter, help='Specify a particular Token store (default: tokens)')
   annotations_ap.add_argument('--sent-store', dest='get_sentences', default=attrgetter('sentences'), type=attrgetter, help='Specify a particular Sentence store (default: sentences)')
   annotations_ap.add_argument('--sent-tok-slice', dest='get_sent_tok_slice', default=attrgetter('span'), type=attrgetter, help='The field on Sentence objects which indicates its slice over tokens (default: span)')
+  annotations_ap.add_argument('--ignore-sents', dest='get_sentences', action='store_const', const=lambda doc: (_SuperSentence(),), help='List all tokens as if in a single sentence')
 
   # TODO: use streams instead of string operations
   formatting_ap = ArgumentParser()
@@ -158,7 +172,14 @@ class WriteConll(App):
     super(WriteConll, self).__init__(argparser, args)
 
   def __call__(self):
-    sys.stdout.write(self.args.fmt_docs(self.process_doc(doc) for doc in self.stream_reader))
+    self.write_flattened(sys.stdout.write, self.args.fmt_docs(self.process_doc(doc) for doc in self.stream_reader))
+
+  def write_flattened(self, write, iterable):
+    for fragment in iterable:
+      if isinstance(fragment, basestring):
+        write(fragment)
+      else:
+        self.write_flattened(write, fragment)
 
   def process_doc(self, doc):
     token_store = self.args.get_tokens(doc)

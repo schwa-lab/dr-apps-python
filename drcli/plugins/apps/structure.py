@@ -212,14 +212,12 @@ class HeadApp(SubsetApp):
   """
   # TODO: handle multiple input sources
   head_arg_parser = ArgumentParser()
-  _me_group = head_arg_parser.add_mutually_exclusive_group()
-  _me_group.add_argument('-n', '--ndocs', metavar='COUNT', type=int, default=1, help='The number of documents to extract (default: %(default)s)')
-  _me_group.add_argument('-i', '--infinite', dest='ndocs', action='store_const', const=None, help='Extract all documents after the skipped portion, for functionality comparable to unix\'s tail -n+N')
+  head_arg_parser.add_argument('-n', '--ndocs', metavar='COUNT', type=int, default=1, help='The number of documents to extract (default: %(default)s)')
   head_arg_parser.add_argument('-s', '--skip', type=int, default=0, help='The number of documents to skip before extracting')
   arg_parsers = (head_arg_parser, ISTREAM_AP, OSTREAM_AP)
 
   def __call__(self):
-    self._run(slice(self.args.skip, None if self.args.infinite else self.args.skip + self.args.ndocs))
+    self._run(slice(self.args.skip, self.args.skip + self.args.ndocs))
 
 
 class TailApp(App):

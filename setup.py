@@ -12,7 +12,7 @@ setup(name='drcli',
       author_email = 'joel.nothman@gmail.com',
       url='http://schwa.org/git/drcli.git',
       packages=['drcli'],
-      install_requires=['argparse', 'brownie'],
+      install_requires=['argparse', 'brownie', 'msgpack-python >= 0.3'],
       package_data = {
         'drcli': ['plugins/*/*.py'],
       },

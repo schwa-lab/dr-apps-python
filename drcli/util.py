@@ -6,9 +6,12 @@ RawDoc = namedtuple('RawDoc', ('version', 'klasses', 'stores', 'doc', 'instances
 def read_raw_docs(unpacker):
     if not hasattr(unpacker, 'unpack'):
         unpacker = msgpack.Unpacker(unpacker, use_list=True)
-    unpack = unpacker.next
-    while True: # unpacker throws StopIteration
-        klasses = unpack()
+    unpack = unpacker.unpack
+    while True:
+        try:
+            klasses = unpack()
+        except msgpack.OutOfData:
+            return
         if isinstance(klasses, int):
             version = klasses
             klasses = unpack()

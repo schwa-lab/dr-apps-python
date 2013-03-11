@@ -177,6 +177,7 @@ class FoldsApp(App):
           writer = writers[key]
         except KeyError:
           writer = writers[key] = new_writer(key)
+        return writer
 
     for i, doc in enumerate(reader):
       writer = get_writer(evaluator(doc, i))

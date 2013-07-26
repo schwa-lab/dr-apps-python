@@ -20,23 +20,29 @@ class RawDoc(object):
       self._doc_packed = self._instances_packed = None
 
   @classmethod
-  def from_stream(cls, unpacker):
+  def from_stream(cls, unpacker, on_end='error'):
+    if on_end not in ('error', 'break'):
+        raise ValueError('on_end must be "error" or "break"')
     if not hasattr(unpacker, 'unpack'):
       unpacker = msgpack.Unpacker(unpacker, use_list=True)
     unpack = unpacker.unpack
     read_bytes = unpacker.read_bytes
-    while True:
-      try:
-        klasses = unpack()
-      except msgpack.OutOfData:
-        return
-      if isinstance(klasses, int):
-        version = klasses
-        klasses = unpack()
-      else:
-        version = 1
-      stores = unpack()
-      yield cls(version, klasses, stores, read_bytes(unpack()), [read_bytes(unpack()) for i in range(len(stores))], packed=True)
+    try:
+      while True:
+        try:
+          klasses = unpack()
+        except msgpack.OutOfData:
+          return
+        if isinstance(klasses, int):
+          version = klasses
+          klasses = unpack()
+        else:
+          version = 1
+        stores = unpack()
+        yield cls(version, klasses, stores, read_bytes(unpack()), [read_bytes(unpack()) for i in range(len(stores))], packed=True)
+    except msgpack.OutOfData:
+      if on_end == 'error':
+        raise
 
   def write(self, out):
     if self.version != 1:
@@ -95,8 +101,8 @@ class RawDoc(object):
   instances_packed = property(_get_instances_packed, _set_instances_packed)
 
 
-def read_raw_docs(unpacker):
-  return RawDoc.from_stream(unpacker)
+def read_raw_docs(unpacker, on_end='error'):
+  return RawDoc.from_stream(unpacker, on_end=on_end)
 
 def write_raw_doc(out, doc):
   doc.write(out)

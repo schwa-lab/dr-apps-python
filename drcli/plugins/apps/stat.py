@@ -188,7 +188,7 @@ class CountApp(App):
     for in_file in self.args.files:
       if i and not self.args.cumulative:
         subtotals = [0] * len(extractors)
-      for doc in read_raw_docs(in_file):
+      for doc in read_raw_docs(in_file, on_end='break'):
         if not i:
           names, extractors = self._get_counters(doc)
           totals = [0] * len(extractors)

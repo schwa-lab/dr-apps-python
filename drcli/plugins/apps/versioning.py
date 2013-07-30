@@ -2,6 +2,7 @@ from collections import defaultdict
 import itertools
 import msgpack
 from schwa.dr.constants import FieldType
+from drcli.api import App
 from drcli.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP
 
 class UpgradeVersionApp(App):

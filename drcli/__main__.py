@@ -14,14 +14,13 @@ def load_plugins(dir):
 
 
 def main(args=None):
+  prog = None
   if args is None:
     args = sys.argv[1:]
     cmd = os.path.basename(sys.argv[0])
     if cmd.startswith('dr-'):
       args.insert(0, cmd[3:])
       prog = 'dr'
-  else:
-    prog = None
   load_plugins(os.path.join(os.path.dirname(__file__), 'plugins/evaluators'))
   load_plugins(os.path.join(os.path.dirname(__file__), 'plugins/apps'))
   parser = argparse.ArgumentParser(prog=prog)

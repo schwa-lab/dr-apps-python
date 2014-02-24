@@ -13,14 +13,22 @@ def load_plugins(dir):
       imp.load_source('arbitrary', os.path.join(dir, f))
 
 
-def main(args=sys.argv[1:]):
+def main(args=None):
+  if args is None:
+    args = sys.argv[1:]
+    cmd = os.path.basename(sys.argv[0])
+    if cmd.startswith('dr-'):
+      args.insert(0, cmd[3:])
+      prog = 'dr'
+  else:
+    prog = None
   load_plugins(os.path.join(os.path.dirname(__file__), 'plugins/evaluators'))
   load_plugins(os.path.join(os.path.dirname(__file__), 'plugins/apps'))
-  parser = argparse.ArgumentParser()
+  parser = argparse.ArgumentParser(prog=prog)
   add_subparsers(parser, sorted(App.CLASSES.items()), 'app_cls', title='apps')
-  args = parser.parse_args()
+  args = parser.parse_args(args)
   args.app_cls(parser, args)()
 
 
 if __name__ == '__main__':
-  main(sys.argv[1:])
+  main()

@@ -1,8 +1,7 @@
 
 import os
-from brownie.importing import import_string
 from drcli.api import App, DECORATE_METHOD
-from drcli.appargs import ArgumentParser, argparse, DrInputType
+from drcli.appargs import ArgumentParser, argparse, DrInputType, import_string
 
 
 class ShellApp(App):

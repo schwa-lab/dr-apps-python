@@ -113,3 +113,8 @@ class RawDocWriter(object):
 
   def write(self, doc):
     doc.write(self.out)
+
+
+def import_string(name):
+  path, base = name.rsplit('.', 1)
+  return getattr(__import__(path, globals=None, fromlist=[base]), base)

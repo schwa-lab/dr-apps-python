@@ -11,7 +11,7 @@ setup(name='drcli',
       author = 'schwa lab',
       url='http://schwa.org/git/drcli.git',
       packages=['drcli'],
-      install_requires=['argparse', 'brownie', 'msgpack-python >= 0.3'],
+      install_requires=['schwa', 'msgpack-python >= 0.3'],
       package_data = {
         'drcli': ['plugins/*/*.py'],
       },

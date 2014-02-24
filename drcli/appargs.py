@@ -3,7 +3,7 @@ import sys
 import argparse
 import gzip
 from functools import partial
-from brownie.importing import import_string
+from .util import import_string
 from .api import DECORATE_METHOD
 
 ArgumentParser = partial(argparse.ArgumentParser, add_help=False, formatter_class=argparse.RawDescriptionHelpFormatter)

@@ -2,7 +2,7 @@
 from schwa import dr
 from drcli.api import Evaluator
 from drcli.evalargs import ArgumentParser, STRING_AP
-from brownie.importing import import_string
+from drcli.util import import_string
 
 
 class PythonImportEval(Evaluator):

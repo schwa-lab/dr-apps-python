@@ -3,9 +3,8 @@ from operator import attrgetter
 from functools import partial
 import argparse
 import sys
-from brownie.importing import import_string
 from drcli.api import App
-from drcli.appargs import ArgumentParser, DESERIALISE_AP
+from drcli.appargs import ArgumentParser, DESERIALISE_AP, import_string
 
 
 DEFAULT_TOKENS_STORE = 'tokens'

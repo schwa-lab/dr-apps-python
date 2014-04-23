@@ -19,7 +19,7 @@ setup(name='drcli',
       entry_points = {      
         'console_scripts': [
             'dr-{0} = drcli.__main__:main'.format(cmd)
-            for cmd in 'conll,count,dump,filter,folds,format,generate,hackheader,head,ls,shell,sort,srcgen,subset,tail,upgrade'.split(',')
+            for cmd in 'conll,count,dump,filter,folds,format,generate,hackheader,head,ls,offsets,shell,sort,srcgen,subset,tail,upgrade'.split(',')
         ] + ['dr = drcli.__main__:main']
       },
       setup_requires=['setuptools_git'],

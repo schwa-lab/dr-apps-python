@@ -5,6 +5,8 @@ from __future__ import print_function
 import sys
 from collections import defaultdict
 import datetime
+import io
+import msgpack
 from drcli.api import App
 from drcli.util import read_raw_docs
 from drcli.appargs import ArgumentParser, ISTREAM_AP, DESERIALISE_AP, DrInputType
@@ -291,5 +293,35 @@ class ListStoresApp(App):
       print(fmt.format(name=k, count=v))
 
 
+class ByteOffsets(App):
+  """
+  List the byte offset at the start of each document.
+  This is useful for indexing a multiple-document file for seek-based random access.
+  """
+  arg_parsers = (DESERIALISE_AP,)
+
+  def __call__(self):
+    # TODO: move to util
+    offset = 0
+    unpacker = msgpack.Unpacker(self.args.in_stream)
+    while True:
+      buf = io.BytesIO()
+      buf_write = buf.write
+      try:
+        version = unpacker.unpack(buf_write)
+      except msgpack.OutOfData:
+        return
+      if version != 2:
+        raise ValueError('Expected version 2, got {}'.format(version))
+      unpacker.skip(buf_write)  # klasses
+      stores = unpacker.unpack(buf_write)
+      for i in xrange(len(stores) + 1):
+        store_len = unpacker.unpack(buf_write)
+        buf_write(unpacker.read_bytes(store_len))
+      print(offset)
+      offset += buf.tell()
+
+
 CountApp.register_name('count')
 ListStoresApp.register_name('ls')
+ByteOffsets.register_name('offsets')

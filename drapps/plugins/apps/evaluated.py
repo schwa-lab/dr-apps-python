@@ -3,8 +3,8 @@ Apps which evaluate a function for each doc and act upon the result.
 """
 from StringIO import StringIO
 from schwa import dr
-from drcli.api import App, Evaluator
-from drcli.appargs import DESERIALISE_AP, OSTREAM_AP, get_evaluator_ap, ArgumentParser
+from drapps.api import App, Evaluator
+from drapps.appargs import DESERIALISE_AP, OSTREAM_AP, get_evaluator_ap, ArgumentParser
 
 class FormatApp(App):
   """
@@ -20,7 +20,7 @@ class FormatApp(App):
       print evaluator(doc, i)
 
 
-class FilterApp(App):
+class GrepApp(App):  # grep
   """
   Filter the documents using an evaluator.
   A string consisting of only whitespace or the word 'false' evaluates to false.
@@ -138,7 +138,7 @@ class FoldsApp(App):
       # avoid full deserialisation
       #TODO: make more generic
       reader = self.raw_stream_reader
-      from drcli.util import RawDocWriter
+      from drapps.util import RawDocWriter
       make_writer = RawDocWriter
     else:
       reader, schema = self.get_reader_and_schema()
@@ -185,7 +185,7 @@ class FoldsApp(App):
 
 
 FormatApp.register_name('format')
-FilterApp.register_name('filter')
+GrepApp.register_name('grep')
 SortApp.register_name('sort')
 FoldsApp.register_name('folds')
 ###SetFieldApp.register_name('set')

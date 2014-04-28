@@ -3,8 +3,8 @@ from __future__ import print_function
 from collections import namedtuple
 import sys
 import functools
-from drcli.api import App, add_subparsers, SubParsed
-from drcli.appargs import ArgumentParser, DESERIALISE_AP, OSTREAM_AP
+from drapps.api import App, add_subparsers, SubParsed
+from drapps.appargs import ArgumentParser, DESERIALISE_AP, OSTREAM_AP
 
 
 Names = namedtuple('Names', 'local qual serial')
@@ -54,7 +54,7 @@ class GenPy(SrcGenLang):
     self._print('from schwa import dr')
     self._print()
 
-    for klass in schema.klasses:
+    for klass in schema.klasses():
       self._define_ann(klass, get_names)
     self._define_ann(schema, get_names, is_doc=True)
   
@@ -112,19 +112,19 @@ class GenPy(SrcGenLang):
     print(self.args.indent * indent + str(obj), file=self.args.out_stream)
 
 
-class GenJava(SrcGenLang):
-  """Generate Java declarations"""
-  pass
+###class GenJava(SrcGenLang):
+###  """Generate Java declarations"""
+###  pass
 
 
-class GenCpp(SrcGenLang):
-  """Generate C++ declarations"""
-  pass
+###class GenCpp(SrcGenLang):
+###  """Generate C++ declarations"""
+###  pass
 
 
 GenPy.register_name('python')
-GenJava.register_name('java')
-GenCpp.register_name('cpp')
+###GenJava.register_name('java')
+###GenCpp.register_name('cpp')
 
 
 class SrcGenerator(App):

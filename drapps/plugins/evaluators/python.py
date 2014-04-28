@@ -1,8 +1,8 @@
 
 from schwa import dr
-from drcli.api import Evaluator
-from drcli.evalargs import ArgumentParser, STRING_AP
-from drcli.util import import_string
+from drapps.api import Evaluator
+from drapps.evalargs import ArgumentParser, STRING_AP
+from drapps.util import import_string
 
 
 class PythonImportEval(Evaluator):

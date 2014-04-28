@@ -4,9 +4,9 @@ import pprint
 import ast
 from schwa import dr
 from schwa.dr.constants import FieldType
-from drcli.api import App
-from drcli.util import read_raw_docs
-from drcli.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP, DESERIALISE_AP
+from drapps.api import App
+from drapps.util import read_raw_docs
+from drapps.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP, DESERIALISE_AP
 
 META_TYPE = 0
 

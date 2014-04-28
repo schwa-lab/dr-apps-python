@@ -1,7 +1,7 @@
 
 import os
-from drcli.api import App, DECORATE_METHOD
-from drcli.appargs import ArgumentParser, argparse, DrInputType, import_string
+from drapps.api import App, DECORATE_METHOD
+from drapps.appargs import ArgumentParser, argparse, DrInputType, import_string
 
 
 class ShellApp(App):

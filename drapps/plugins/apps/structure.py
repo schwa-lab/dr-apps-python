@@ -6,8 +6,8 @@ from collections import defaultdict
 from itertools import izip, islice
 from collections import deque
 from schwa import dr
-from drcli.api import App
-from drcli.appargs import DESERIALISE_AP, OSTREAM_AP, ISTREAM_AP, ArgumentParser
+from drapps.api import App
+from drapps.appargs import DESERIALISE_AP, OSTREAM_AP, ISTREAM_AP, ArgumentParser
 
 
 def SelectField(s):

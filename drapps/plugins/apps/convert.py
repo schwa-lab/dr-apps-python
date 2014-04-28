@@ -3,8 +3,8 @@ from operator import attrgetter
 from functools import partial
 import argparse
 import sys
-from drcli.api import App
-from drcli.appargs import ArgumentParser, DESERIALISE_AP, import_string
+from drapps.api import App
+from drapps.appargs import ArgumentParser, DESERIALISE_AP, import_string
 
 
 DEFAULT_TOKENS_STORE = 'tokens'

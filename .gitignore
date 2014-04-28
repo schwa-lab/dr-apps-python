@@ -10,5 +10,7 @@ ext
 tags
 dist
 drcli.egg-info
+dr-apps-python.egg-info
+drapps.egg-info
 setuptools_git-0.4.2-py2.7.egg/
 ve

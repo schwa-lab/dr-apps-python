@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-python -m drcli.__main__ "$@"
+python -m drapps.__main__ "$@"

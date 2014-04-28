@@ -7,9 +7,9 @@ from collections import defaultdict
 import datetime
 import io
 import msgpack
-from drcli.api import App
-from drcli.util import read_raw_docs
-from drcli.appargs import ArgumentParser, ISTREAM_AP, DESERIALISE_AP, DrInputType
+from drapps.api import App
+from drapps.util import read_raw_docs
+from drapps.appargs import ArgumentParser, ISTREAM_AP, DESERIALISE_AP, DrInputType
 
 
 def get_store_names(doc):

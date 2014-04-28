@@ -8,8 +8,8 @@ try:
 except ImportError:
   Template = None
 
-from drcli.api import Evaluator
-from drcli.evalargs import STRING_AP
+from drapps.api import Evaluator
+from drapps.evalargs import STRING_AP
 
 
 class DjangoEvaluator(Evaluator):

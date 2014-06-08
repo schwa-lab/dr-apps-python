@@ -112,6 +112,8 @@ class FoldsApp(App):
   """
   Split a stream into k files, or a separate file for each key determined per doc.
   To perform stratified k-fold validation, first sort the corpus by the stratification label.
+
+  If the evaluation returns a list, the document is written to each key in the list.
   """
   multioutput_ap = ArgumentParser()
   multioutput_ap.add_argument('-t', '--template', dest='path_tpl', default='fold{n:03d}.dr', help='A template for output paths (default: %(default)s). {n} substitutes for fold number, {key} for evaluation output.')
@@ -181,8 +183,10 @@ class FoldsApp(App):
         return writer
 
     for i, doc in enumerate(reader):
-      writer = get_writer(evaluator(doc, i))
-      writer.write(doc)
+      val = evaluator(doc, i)
+      for key in val if isinstance(val, list) else (val,):
+        writer = get_writer(key)
+        writer.write(doc)
 
 
 FormatApp.register_name('format')

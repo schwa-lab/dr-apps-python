@@ -1,7 +1,8 @@
 """
 Apps which evaluate a function for each doc and act upon the result.
 """
-from StringIO import StringIO
+from __future__ import print_function
+from io import BytesIO
 from schwa import dr
 from drapps.api import App, Evaluator
 from drapps.appargs import DESERIALISE_AP, OSTREAM_AP, get_evaluator_ap, ArgumentParser
@@ -17,7 +18,7 @@ class FormatApp(App):
   def __call__(self):
     evaluator = self.evaluator
     for i, doc in enumerate(self.stream_reader):
-      print evaluator(doc, i)
+      print(evaluator(doc, i))
 
 
 class GrepApp(App):  # grep
@@ -59,7 +60,7 @@ class SortApp(App):
 
   def __call__(self):
     reader, schema = self.get_reader_and_schema()
-    tmp_out = StringIO()
+    tmp_out = BytesIO()
     tmp_writer = dr.Writer(tmp_out, schema)
     evaluator = self.evaluator
     items = []
@@ -163,9 +164,9 @@ class FoldsApp(App):
         path = self.args.path_tpl.format(n=fold_num, key=key)
         import sys, os.path
         if not self.args.overwrite and os.path.exists(path):
-          print >> sys.stderr, 'Path {0} already exists. Use --overwrite to overwrite.'.format(path)
+          print('Path {0} already exists. Use --overwrite to overwrite.'.format(path), file=sys.stderr)
           sys.exit(1)
-        print >> sys.stderr, 'Writing fold {k} to {path}'.format(k=fold_num, path=path)
+        print('Writing fold {k} to {path}'.format(k=fold_num, path=path), file=sys.stderr)
         return make_writer(fopen(path, 'wb'))
 
     if self.args.sparse:

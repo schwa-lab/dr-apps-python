@@ -230,12 +230,14 @@ class CountApp(App):
     if self.args.count_all:
       self.args.count_stores = sorted(get_store_names(doc))
       if self.args.count_bytes:
-        self.args.count_stores.insert(0, '__meta__')
+        self.args.count_stores.insert(0, b'__meta__')
+    else:
+      self.args.count_stores = [name.encode('utf-8') for name in self.args.count_stores]
     if self.args.count_docs:
       names.append('docs')
       extractors.append(self._doc_counter)
     for store in self.args.count_stores:
-      names.append(store)
+      names.append(store.decode('utf-8'))
       extractors.append(self._make_store_counter(store))
     return names, extractors
 
@@ -289,7 +291,7 @@ class ListStoresApp(App):
         fmt = '{name}\t{count}'
     except NameError:
       print("No documents found", out=sys.stderr)
-    for k, v in sorted(counter.items(), key=lambda (k, v): (-v, k)):
+    for k, v in sorted(counter.items(), key=lambda tup: (-tup[1], tup[0])):
       print(fmt.format(name=k, count=v))
 
 
@@ -315,7 +317,7 @@ class ByteOffsets(App):
         raise ValueError('Expected version 2, got {}'.format(version))
       unpacker.skip(buf_write)  # klasses
       stores = unpacker.unpack(buf_write)
-      for i in xrange(len(stores) + 1):
+      for i in range(len(stores) + 1):
         store_len = unpacker.unpack(buf_write)
         buf_write(unpacker.read_bytes(store_len))
       print(offset)

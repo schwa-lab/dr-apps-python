@@ -17,7 +17,7 @@ setup(name='drapps',
       author_email = 'joel.nothman@gmail.com',
       url='https://github.com/schwa-lab/dr-apps-python',
       packages=['drapps'],
-      install_requires=['libschwa-python', 'msgpack-python >= 0.3'],
+      install_requires=['libschwa-python', 'msgpack-python >= 0.3', 'six'],
       package_data = {
         'drapps': ['plugins/*/*.py'],
       },

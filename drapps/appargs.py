@@ -6,6 +6,8 @@ from functools import partial
 from .util import import_string
 from .api import DECORATE_METHOD
 
+import six
+
 ArgumentParser = partial(argparse.ArgumentParser, add_help=False, formatter_class=argparse.RawDescriptionHelpFormatter)
 
 class SuffixDependentType(object):
@@ -13,7 +15,7 @@ class SuffixDependentType(object):
     if hasattr(suffix_fns, 'items'):
       suffix_fns = suffix_fns.items()
     suffix_fns = list(suffix_fns)
-    suffix_fns.sort(key=lambda (suf, fn): -len(suf))
+    suffix_fns.sort(key=lambda suf_fn: -len(suf_fn[0]))
     self.suffix_fns = suffix_fns
   
   def __call__(self, arg):
@@ -29,16 +31,16 @@ DrOutputType = SuffixDependentType({'': argparse.FileType('wb'), '.gz': open_wri
 
 
 ISTREAM_AP = ArgumentParser(add_help=False)
-ISTREAM_AP.add_argument('--in-file', metavar='PATH', dest='in_stream', type=DrInputType, default=sys.stdin, help='The input file (default: STDIN)')
+ISTREAM_AP.add_argument('--in-file', metavar='PATH', dest='in_stream', type=DrInputType, default=sys.stdin.buffer if six.PY3 else sys.stdin, help='The input file (default: STDIN)')
 
 DESERIALISE_AP = ArgumentParser(parents=(ISTREAM_AP,), add_help=False)
 DESERIALISE_AP.add_argument('--doc-class', metavar='CLS', dest='doc_class', type=import_string, help='Import path to the Document class for the input.  If available, doc.{0}() will be called for each document on the stream.'.format(DECORATE_METHOD))
 
 OSTREAM_AP = ArgumentParser(add_help=False)
-OSTREAM_AP.add_argument('--out-file', metavar='PATH', dest='out_stream', type=DrOutputType, default=sys.stdout, help='The output file (default: STDOUT)')
+OSTREAM_AP.add_argument('--out-file', metavar='PATH', dest='out_stream', type=DrOutputType, default=sys.stdout.buffer if six.PY3 else sys.stdout, help='The output file (default: STDOUT)')
 
 def get_evaluator_ap(extra={}):
-  from api import add_subparsers, Evaluator
+  from .api import add_subparsers, Evaluator
   res = ArgumentParser(add_help=False)
   add_subparsers(res, sorted(extra.items()) + sorted(Evaluator.CLASSES.items()), 'eval_cls', title='evaluators')
   return res

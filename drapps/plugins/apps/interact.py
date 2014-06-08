@@ -41,7 +41,7 @@ class ShellApp(App):
   def __call__(self):
     local = self.build_locals()
     if self.args.code:
-      exec self.args.code in local
+      exec(self.args.code, local)  # XXX: this is actually using globals, not locals
     if not self.args.interactive:
       return
 
@@ -53,7 +53,7 @@ class ShellApp(App):
     for shell in shells:
       try:
         return getattr(self, 'run_' + shell)(local)
-      except ImportError, e:
+      except ImportError as e:
         pass
     raise e
 
@@ -71,10 +71,10 @@ class ShellApp(App):
     pythonrc = os.environ.get("PYTHONSTARTUP")
     if pythonrc and os.path.isfile(pythonrc):
       try:
-        exec open(pythonrc) in res
+        exec(open(pythonrc), res)
       except NameError:
         pass
-    exec 'import user' in res
+    exec('import user', res)
     return res
 
   def run_ipython(self, local):

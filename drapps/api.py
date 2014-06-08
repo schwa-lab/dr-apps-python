@@ -1,5 +1,6 @@
 import textwrap
 import argparse
+import itertools
 from schwa.dr import Reader
 from schwa.dr import Writer
 
@@ -70,7 +71,12 @@ class App(SubParsed):
       for doc in reader:
         decorate(doc)
         yield doc
-    return docs(), reader.doc_schema
+    x, y = itertools.tee(docs())
+    try:
+      next(x)  # ensures reader.doc_schema is non-None
+    except StopIteration:
+      return (), None
+    return y, reader.doc_schema
 
   @property
   def stream_reader(self):

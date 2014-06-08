@@ -8,7 +8,7 @@ try:
   import argcomplete
 except ImportError:
   argcomplete = None
-from api import App, add_subparsers
+from .api import App, add_subparsers
 
 
 def load_plugins(dir):

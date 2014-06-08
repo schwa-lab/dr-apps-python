@@ -49,7 +49,7 @@ class UpgradeVersionApp(App):
     meta_klass = None
     try:
       klasses = messages.next()
-    except StopIteration, e:
+    except StopIteration as e:
       self._ended_early(self, e)
 
     for knum, (name, fields) in enumerate(klasses):
@@ -64,15 +64,15 @@ class UpgradeVersionApp(App):
     del klasses
 
     try:
-      stores = messages.next()
+      stores = next(messages)
     except StopIteration:
       self._ended_early(self, e)
     yield stores # unchanged
 
     for knum in itertools.chain((meta_klass,), (k for name, k, size in stores)):
       try:
-        nbytes = messages.next()
-        instances = messages.next()
+        nbytes = next(messages)
+        instances = next(messages)
       except StopIteration:
         self._ended_early(self, e)
 

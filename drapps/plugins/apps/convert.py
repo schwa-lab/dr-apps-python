@@ -3,6 +3,7 @@ from operator import attrgetter
 from functools import partial
 import argparse
 import sys
+import six
 from drapps.api import App
 from drapps.appargs import ArgumentParser, DESERIALISE_AP, import_string
 
@@ -105,7 +106,7 @@ def get_raw(tok):
 def fmt_separator(sep):
   def join_gen(items):
     items = iter(items)
-    yield items.next()
+    yield next(items)
     for item in items:
       yield sep
       yield item
@@ -175,7 +176,7 @@ class WriteConll(App):
 
   def write_flattened(self, write, iterable):
     for fragment in iterable:
-      if isinstance(fragment, basestring):
+      if isinstance(fragment, six.string_types):
         write(fragment)
       else:
         self.write_flattened(write, fragment)

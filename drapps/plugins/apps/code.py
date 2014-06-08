@@ -142,7 +142,7 @@ class SrcGenerator(App):
     self.generate = args.gen_cls(argparser, args)
 
   def __call__(self):
-    doc = self.stream_reader.next()
+    doc = next(self.stream_reader)
     schema = doc._dr_rt.copy_to_schema() #### WARNING: using private
     self.generate(schema)
 

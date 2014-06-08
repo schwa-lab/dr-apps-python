@@ -1,10 +1,12 @@
 """
 Apps to restructure a corpus.
 """
-from StringIO import StringIO
+from io import BytesIO
 from collections import defaultdict
-from itertools import izip, islice
+from itertools import islice
 from collections import deque
+from six.moves import range, zip
+import six
 from schwa import dr
 from drapps.api import App
 from drapps.appargs import DESERIALISE_AP, OSTREAM_AP, ISTREAM_AP, ArgumentParser
@@ -45,7 +47,7 @@ class SelectApp(App):
     # FIXME: externalise reflection methods ... or avoid it by just deleting attributes
     reader, writer = self.stream_reader_writer
     for doc in reader:
-      for store in doc._dr_stores.itervalues():
+      for store in six.itervalues(doc._dr_stores):
         try:
           fields = self.args.annot_fields[store.klass_name]
         except KeyError:
@@ -104,8 +106,8 @@ class RenameApp(App):
     reader, writer = self.stream_reader_writer
     for doc in reader:
       classes = {None: doc.__class__}
-      classes.update((store.klass_name, store._klass) for store in doc._dr_stores.itervalues())
-      for klass_name, klass in classes.iteritems():
+      classes.update((store.klass_name, store._klass) for store in six.itervalues(doc._dr_stores))
+      for klass_name, klass in six.iteritems(classes):
         try:
           renames = self.args.renames[klass_name]
         except KeyError:
@@ -185,7 +187,7 @@ class SubsetApp(App):
     if None in stops:
       pairs = enumerate(it)
     else:
-      pairs = izip(xrange(max(stops)), it)
+      pairs = zip(range(max(stops)), it)
 
     yielding = False
     for i, obj in pairs:
@@ -259,7 +261,7 @@ class GenerateApp(App):
   arg_parsers = (ndocs_ap, OSTREAM_AP)
 
   def __call__(self):
-    empty = StringIO()
+    empty = BytesIO()
     writer = dr.Writer(empty, dr.Doc)
     writer.write(dr.Doc())
     empty = empty.getvalue()

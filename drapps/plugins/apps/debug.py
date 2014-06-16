@@ -1,6 +1,8 @@
 
+from __future__ import print_function
 import msgpack
 import pprint
+import json
 import ast
 from schwa import dr
 from schwa.dr.constants import FieldType
@@ -10,6 +12,11 @@ from drapps.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP, DESERIALISE_A
 
 META_TYPE = 0
 
+FORMATTERS = {
+  'json': json.dumps,
+  'pprint': pprint.pformat,
+}
+
 class DumpApp(App):
   """
   Debug: unpack the stream and pretty-print it.
@@ -18,19 +25,27 @@ class DumpApp(App):
   dump_ap.add_argument('-m', '--human', dest='human_readable', action='store_true', default=False, help='Reinterpret the messages to be more human-readable by integrating headers into content.')
   dump_ap.add_argument('-n', '--numbered', action='store_true', default=False, help='In --human mode, add a \'#\' field to each annotation, indicating its ordinal index')
   dump_ap.add_argument('-d', '--headers', dest='hide_instances', action='store_true', default=False, help='Show headers only, hiding any instances')
+  dump_ap.add_argument('-j', '--json', dest='format', action='store_const', const='json', default='pprint', help='Output valid JSON')
   arg_parsers = (dump_ap, ISTREAM_AP, OSTREAM_AP)
 
   def dump(self, obj):
-    pprint.pprint(obj, self.args.out_stream)
+    print(self.format(obj), file=self.args.out_stream)
 
   def __call__(self):
+    self.format = FORMATTERS[self.args.format]
     unpacker = msgpack.Unpacker(self.args.in_stream)
     if self.args.human_readable:
       unpacker = self._integrate_names(unpacker)
     elif self.args.hide_instances:
       unpacker = self._headers_only(unpacker)
+    first = True
     for obj in unpacker:
+      if self.args.format == 'json':
+        print('[' if first else ',', file=self.args.out_stream)
       self.dump(obj)
+      first = False
+    if self.args.format == 'json':
+      print(']')
 
   def _headers_only(self, unpacker):
     for doc in read_raw_docs(unpacker):

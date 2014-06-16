@@ -108,7 +108,7 @@ class KFoldsEvaluator(Evaluator):
     return ind % self.args.kfolds
 
 
-class FoldsApp(App):
+class SplitApp(App):
   """
   Split a stream into k files, or a separate file for each key determined per doc.
   To perform stratified k-fold validation, first sort the corpus by the stratification label.
@@ -192,5 +192,5 @@ class FoldsApp(App):
 FormatApp.register_name('format')
 GrepApp.register_name('grep')
 SortApp.register_name('sort')
-FoldsApp.register_name('folds')
+SplitApp.register_name('split')
 ###SetFieldApp.register_name('set')

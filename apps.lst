@@ -2,7 +2,6 @@ conll
 count-py
 dump
 grep-py
-folds
 format
 generate
 hackheader
@@ -11,6 +10,7 @@ ls
 offsets
 shell
 sort
+split
 srcgen
 subset
 tail

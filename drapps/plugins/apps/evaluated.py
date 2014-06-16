@@ -38,7 +38,7 @@ class GrepApp(App):  # grep
 
 
 class RandomEvaluator(Evaluator):
-  """Distribute to each of k folds"""
+  """Shuffle the input randomly"""
   ap = ArgumentParser()
   ap.add_argument('--seed', dest='rand_seed', type=int, default=None)
   arg_parsers = (ap,)

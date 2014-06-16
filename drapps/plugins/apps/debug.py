@@ -112,8 +112,7 @@ class DumpApp(App):
 
   def _reverse_pointers_with_names(self, obj):
     for source_name, source_store in obj.items():
-      if source_name[:2] == '__' == source_name[-2:]:
-        # TODO: handle pointers from __meta__
+      if source_name == '__version__':
         continue
       for source_field, source_desc in source_store.get('fields', {}).items():
         target_name = source_desc.get('points to')
@@ -123,7 +122,11 @@ class DumpApp(App):
         qual_field = '{}.{}'.format(source_name, source_field)
         target_items = obj[target_name]['items']
         is_slice = 'is slice' in source_desc
-        for i, source_item in enumerate(source_store['items']):
+        if source_name == '__meta__':
+          source_items = [source_store['item']]
+        else:
+          source_items = source_store['items']
+        for i, source_item in enumerate(source_items):
           pointers = source_item.get(source_field)
           if not pointers:
             continue

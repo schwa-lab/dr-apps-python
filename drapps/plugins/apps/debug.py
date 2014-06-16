@@ -59,7 +59,8 @@ class DumpApp(App):
       obj = {}
       obj['__version__'] = doc.version
       store_defs = list(self._process_store_defs(doc.stores, doc.klasses))
-      obj['__meta__'] = self._process_annot(doc.doc, doc.klasses[META_TYPE][1])
+      obj['__meta__'] = {'fields': dict(self._fields_to_dict(doc.klasses[META_TYPE][1], store_defs)),
+                         'item': self._process_annot(doc.doc, doc.klasses[META_TYPE][1])}
       if self.args.numbered:
           obj['#'] = i
       for (store_name, store), instances in zip(store_defs, doc.instances):

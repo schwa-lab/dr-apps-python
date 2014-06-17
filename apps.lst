@@ -6,12 +6,9 @@ folds
 format
 generate
 hackheader
-head
 ls
-offsets
 shell
 sort
 srcgen
 subset
-tail
 upgrade

@@ -6,7 +6,6 @@ Apps to restructure a corpus.
 from __future__ import absolute_import, print_function, unicode_literals
 import collections
 import io
-import itertools
 
 from schwa import dr
 import six
@@ -136,23 +135,6 @@ class RenameApp(App):
       writer.write(doc)
 
 
-class Compose(App):
-  """
-  Given two document streams of equal length, output their pairwise composition.
-  """
-  pass
-  # TODO: can this be done in Python API?
-
-
-class CatApp(App):
-  """
-  Concatenate docrep files.
-  """
-  pass
-  arg_parsers = (ISTREAM_AP, OSTREAM_AP)
-  # TODO: avoid deserialising
-
-
 def subset_type(str_val):
     if ':' not in str_val:
       val = int(str_val)
@@ -210,52 +192,6 @@ class SubsetApp(App):
     self._run(*self.args.slices)
 
 
-class HeadApp(SubsetApp):
-  """
-  Extract the first n documents, optionally after a skipped quantity.
-
-  Examples:
-    %(prog)s           # extract the first document from STDIN
-    %(prog)s -n5       # extract the first five documents
-    %(prog)s -s5 -n5   # extract the 6th to 10th documents
-    %(prog)s -is5      # extract all but the first 5 documents
-  """
-  # TODO: handle multiple input sources
-  head_arg_parser = ArgumentParser()
-  head_arg_parser.add_argument('-n', '--ndocs', metavar='COUNT', type=int, default=1, help='The number of documents to extract (default: %(default)s)')
-  head_arg_parser.add_argument('-s', '--skip', type=int, default=0, help='The number of documents to skip before extracting')
-  arg_parsers = (head_arg_parser, ISTREAM_AP, OSTREAM_AP)
-
-  def __call__(self):
-    self._run(slice(self.args.skip, self.args.skip + self.args.ndocs))
-
-
-class TailApp(App):
-  """
-  Extract the last n documents.
-
-  Examples:
-    %(prog)s          # extract the last document
-    %(prog)s -n5      # extract the last five documents
-  """
-  # TODO: handle multiple input sources
-  tail_arg_parser = ArgumentParser()
-  tail_arg_parser.add_argument('-n', '--ndocs', metavar='COUNT', type=int, default=1, help='The number of documents to extract (default: %(default)s)')
-  tail_arg_parser.add_argument('-s', '--skip', type=int, default=0, help='The number of documents to skip after extracting')
-  arg_parsers = (tail_arg_parser, ISTREAM_AP, OSTREAM_AP)
-
-  def __call__(self):
-    # TODO: avoid desiralising
-    # TODO: avoid keeping deserialised objects in memory
-    writer = self.raw_stream_writer
-    reader = self.raw_stream_reader
-    buf = collections.deque(maxlen=self.args.ndocs + self.args.skip)
-    for doc in reader:
-      buf.append(doc)
-    for doc in itertools.islice(buf, self.args.ndocs):
-      writer.write(doc)
-
-
 class GenerateApp(App):
   """
   Generate empty documents.
@@ -277,7 +213,5 @@ class GenerateApp(App):
       i += 1
 
 
-HeadApp.register_name('head')
-TailApp.register_name('tail')
 SubsetApp.register_name('subset')
 GenerateApp.register_name('generate')

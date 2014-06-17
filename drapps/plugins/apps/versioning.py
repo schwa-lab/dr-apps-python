@@ -6,6 +6,7 @@ import itertools
 
 import msgpack
 from schwa.dr.constants import FieldType
+import six
 from six.moves import range
 
 from drapps.api import App
@@ -23,7 +24,10 @@ class UpgradeVersionApp(App):
 
   def __call__(self):
     unpacker = msgpack.Unpacker(self.args.in_stream)
-    while self.process_doc(unpacker, self.args.out_stream):
+    out = self.args.out_stream
+    if six.PY3:
+      out = out.buffer
+    while self.process_doc(unpacker, out):
       pass
 
   def process_doc(self, messages, out):

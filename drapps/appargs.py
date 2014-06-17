@@ -42,7 +42,7 @@ DESERIALISE_AP = ArgumentParser(parents=(ISTREAM_AP,), add_help=False)
 DESERIALISE_AP.add_argument('--doc-class', metavar='CLS', dest='doc_class', type=import_string, help='Import path to the Document class for the input.  If available, doc.{0}() will be called for each document on the stream.'.format(DECORATE_METHOD))
 
 OSTREAM_AP = ArgumentParser(add_help=False)
-OSTREAM_AP.add_argument('--out-file', metavar='PATH', dest='out_stream', type=DrOutputType, default=sys.stdout.buffer if six.PY3 else sys.stdout, help='The output file (default: STDOUT)')
+OSTREAM_AP.add_argument('--out-file', metavar='PATH', dest='out_stream', type=DrOutputType, default=sys.stdout, help='The output file (default: STDOUT)')
 
 
 def get_evaluator_ap(extra={}):

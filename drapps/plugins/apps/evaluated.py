@@ -9,6 +9,7 @@ import os
 import sys
 
 from schwa import dr
+import six
 
 from drapps.api import App, Evaluator
 from drapps.appargs import DESERIALISE_AP, OSTREAM_AP, ArgumentParser, get_evaluator_ap
@@ -81,7 +82,10 @@ class SortApp(App):
 
     items.sort()
     for doc_key, doc_data in items:
-      self.args.out_stream.write(doc_data)
+      out = self.args.out_stream
+      if six.PY3:
+        out = out.buffer
+      out.write(doc_data)
 
 
 class SetFieldApp(App):

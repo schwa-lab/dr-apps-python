@@ -207,6 +207,8 @@ class GenerateApp(App):
     empty = empty.getvalue()
 
     out = self.args.out_stream
+    if six.PY3:
+      out = out.buffer
     i = 0
     while i < self.args.ndocs:
       out.write(empty)

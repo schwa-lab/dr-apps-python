@@ -1,9 +1,16 @@
-from collections import defaultdict
+# vim: set et nosi ai ts=2 sts=2 sw=2:
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, print_function, unicode_literals
+import collections
 import itertools
+
 import msgpack
 from schwa.dr.constants import FieldType
+from six.moves import range
+
 from drapps.api import App
 from drapps.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP
+
 
 class UpgradeVersionApp(App):
   """Upgrade wire format"""
@@ -32,7 +39,7 @@ class UpgradeVersionApp(App):
     for version in range(version, self.args.target_version):
       messages = getattr(self, 'update_to_v{0}'.format(version + 1))(messages)
 
-    msgpack.pack(self.args.target_version, out) # update functions do not output version
+    msgpack.pack(self.args.target_version, out)  # update functions do not output version
     for msg in messages:
       msgpack.pack(msg, out)
 
@@ -45,7 +52,7 @@ class UpgradeVersionApp(App):
     * Replaces slice stop from absolute to relative offset
     """
     # TODO: accept options to make certain fields self-pointers
-    slice_fields = defaultdict(set)
+    slice_fields = collections.defaultdict(set)
     meta_klass = None
     try:
       klasses = messages.next()
@@ -60,14 +67,14 @@ class UpgradeVersionApp(App):
           # None is the new True
           fdef[FieldType.IS_SLICE] = None
           slice_fields[knum].add(fnum)
-    yield klasses # changed
+    yield klasses  # changed
     del klasses
 
     try:
       stores = next(messages)
     except StopIteration:
       self._ended_early(self, e)
-    yield stores # unchanged
+    yield stores  # unchanged
 
     for knum in itertools.chain((meta_klass,), (k for name, k, size in stores)):
       try:
@@ -81,7 +88,7 @@ class UpgradeVersionApp(App):
         yield nbytes
         yield instances
         continue
-      
+
       inst_iter = (instances,) if isinstance(instances, dict) else instances
       ksl_fields = slice_fields[knum]
       for instance in inst_iter:

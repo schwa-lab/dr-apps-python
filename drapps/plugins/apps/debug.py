@@ -1,14 +1,20 @@
+# vim: set et nosi ai ts=2 sts=2 sw=2:
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, print_function, unicode_literals
+import ast
+import pprint
 
 import msgpack
-import pprint
-import ast
-from schwa import dr
 from schwa.dr.constants import FieldType
+from six.moves import zip
+
 from drapps.api import App
 from drapps.util import read_raw_docs
-from drapps.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP, DESERIALISE_AP
+from drapps.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP
+
 
 META_TYPE = 0
+
 
 class DumpApp(App):
   """
@@ -69,9 +75,9 @@ class DumpApp(App):
     return dict((fields[fnum][FieldType.NAME], val) for fnum, val in msg.iteritems())
 
   TRAIT_NAMES = {
-    FieldType.IS_SLICE: 'is slice',
-    FieldType.IS_SELF_POINTER: 'is self-pointer',
-    FieldType.IS_COLLECTION: 'is collection',
+      FieldType.IS_SLICE: 'is slice',
+      FieldType.IS_SELF_POINTER: 'is self-pointer',
+      FieldType.IS_COLLECTION: 'is collection',
   }
 
   def _fields_to_dict(self, fields, store_defs, trait_names=TRAIT_NAMES):
@@ -111,7 +117,7 @@ class HackHeaderApp(App):
       if exp_type is not None and type(res) != exp_type:
         argparser.error('{0} does not evaluate to type {1}'.format(s, exp_type))
       return res
-    
+
     self.operations = []
 
     if args.klasses:
@@ -152,7 +158,7 @@ class HackHeaderApp(App):
         pass
       value = parse(value, dict)
       self.operations.append((self._set_field, {'klass': kname, 'field': fname, 'value': value, 'update': update}))
-    
+
     if not self.operations:
       argparser.error('Nothing to do!')
 
@@ -186,7 +192,7 @@ class HackHeaderApp(App):
           return
 
     raise ValueError('Could not find field {1} in class {0}'.format(klass, field))
-  
+
   def __call__(self):
     writer = self.raw_stream_writer
     for doc in self.raw_stream_reader:

@@ -1,15 +1,18 @@
-import textwrap
+# vim: set et nosi ai ts=2 sts=2 sw=2:
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, print_function, unicode_literals
 import argparse
 import itertools
-from schwa.dr import Reader
-from schwa.dr import Writer
+import textwrap
+
+from schwa.dr import Reader, Writer
 
 DECORATE_METHOD = 'drcli_decorate'
 
 
 class SubParsed(object):
   arg_parsers = ()
-  CLASSES = None # Overwrite as dict in subtypes
+  CLASSES = None  # Overwrite as dict in subtypes
 
   @classmethod
   def get_arg_parsers(cls):
@@ -17,9 +20,9 @@ class SubParsed(object):
 
   @classmethod
   def register_name(cls, name, reg_cls=None):
-    reg_cls = reg_cls or cls # allows to be used as wrapper with partial
+    reg_cls = reg_cls or cls  # allows to be used as wrapper with partial
     if name in cls.CLASSES:
-      raise ValueError('Cannot assign %r as name for %r: already assigned to %r' % (name, reg_cls, cls.CLASSES[name]))
+      raise ValueError('Cannot assign {0!r} as name for {1!r}: already assigned to {2!r}'.format(name, reg_cls, cls.CLASSES[name]))
     cls.CLASSES[name] = reg_cls
     return reg_cls
 
@@ -52,6 +55,7 @@ class Evaluator(SubParsed):
 
 class App(SubParsed):
   CLASSES = {}
+
   def __init__(self, argparser, args):
     super(App, self).__init__(argparser, args)
     eval_cls = getattr(args, 'eval_cls', None)
@@ -67,6 +71,7 @@ class App(SubParsed):
     doc_cls = getattr(self.args, 'doc_class', None)
     decorate = getattr(doc_cls, DECORATE_METHOD, lambda doc: None)
     reader = Reader(stream, doc_cls, doc_cls is None)
+
     def docs():
       for doc in reader:
         decorate(doc)
@@ -94,13 +99,10 @@ class App(SubParsed):
 
   @property
   def raw_stream_reader(self):
-      from .util import read_raw_docs
-      return read_raw_docs(self.args.in_stream)
+    from .util import read_raw_docs
+    return read_raw_docs(self.args.in_stream)
 
   @property
   def raw_stream_writer(self):
-      from .util import RawDocWriter
-      return RawDocWriter(self.args.out_stream)
-
-
-
+    from .util import RawDocWriter
+    return RawDocWriter(self.args.out_stream)

@@ -1,13 +1,18 @@
 #!/usr/bin/env python
+# vim: set et nosi ai ts=2 sts=2 sw=2:
+# -*- coding: utf-8 -*-
 # PYTHON_ARGCOMPLETE_OK
-import os.path
-import sys
-import imp
+from __future__ import absolute_import, print_function, unicode_literals
 import argparse
+import imp
+import os
+import sys
+
 try:
   import argcomplete
 except ImportError:
   argcomplete = None
+
 from .api import App, add_subparsers
 
 

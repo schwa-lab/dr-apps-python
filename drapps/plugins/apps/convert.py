@@ -1,15 +1,18 @@
-
-from operator import attrgetter
-from functools import partial
+# vim: set et nosi ai ts=2 sts=2 sw=2:
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, print_function, unicode_literals
 import argparse
+from functools import partial
+from operator import attrgetter
 import sys
+
 import six
+
 from drapps.api import App
-from drapps.appargs import ArgumentParser, DESERIALISE_AP, import_string
+from drapps.appargs import DESERIALISE_AP, ArgumentParser, import_string
 
 
 DEFAULT_TOKENS_STORE = 'tokens'
-
 
 
 class _AppendSliceField(argparse._AppendAction):
@@ -65,7 +68,7 @@ class _IOB(_SliceFormatter):
       tag = 'B'
     else:
       tag = 'I'
-      
+
     self.prev_val = val
     return '{0}-{1}'.format(tag, val)
 
@@ -99,6 +102,7 @@ class _BILOU(_SliceFormatter):
 def get_norm(tok):
   return tok.norm or tok.raw
 
+
 def get_raw(tok):
   return tok.raw or tok.norm
 
@@ -129,7 +133,7 @@ class _SuperSentence(object):
 
 class WriteConll(App):
   """Writes documents in CONLL format, or a format which similarly lists fields separated by some delimiter.
-  
+
   Example invocation:
   `cat docs.dr | dr conll --doc-class some.module.Document --norm -f pos --iob1 chunk.tag`
   For `--iob1 'chunk.tag'` to work, this assumes some.module.Document.drcli_decorate includes the following decoration:

@@ -1,11 +1,18 @@
+# vim: set et nosi ai ts=2 sts=2 sw=2:
+# -*- coding: utf-8 -*-
 """
 Apps which evaluate a function for each doc and act upon the result.
 """
-from __future__ import print_function
-from io import BytesIO
+from __future__ import absolute_import, print_function, unicode_literals
+import io
+import os
+import sys
+
 from schwa import dr
+
 from drapps.api import App, Evaluator
-from drapps.appargs import DESERIALISE_AP, OSTREAM_AP, get_evaluator_ap, ArgumentParser
+from drapps.appargs import DESERIALISE_AP, OSTREAM_AP, ArgumentParser, get_evaluator_ap
+
 
 class FormatApp(App):
   """
@@ -60,7 +67,7 @@ class SortApp(App):
 
   def __call__(self):
     reader, schema = self.get_reader_and_schema()
-    tmp_out = BytesIO()
+    tmp_out = io.BytesIO()
     tmp_writer = dr.Writer(tmp_out, schema)
     evaluator = self.evaluator
     items = []
@@ -131,7 +138,7 @@ class FoldsApp(App):
         argparser.error('--overwrite does not apply with --sparse')
       if isinstance(self.evaluator, KFoldsEvaluator):
         argparser.error('k-folds cannot be used with --sparse')
-      if any(expr in args.path_tpl for expr in ('{n}', '{n!', '{n:')): # FIXME: use regexp
+      if any(expr in args.path_tpl for expr in ('{n}', '{n!', '{n:')):  # FIXME: use regexp
         argparser.error('--sparse must use filenames templated by key')
 
   def __call__(self):
@@ -139,7 +146,7 @@ class FoldsApp(App):
     evaluator = self.evaluator
     if isinstance(evaluator, KFoldsEvaluator):
       # avoid full deserialisation
-      #TODO: make more generic
+      # TODO: make more generic
       reader = self.raw_stream_reader
       from drapps.util import RawDocWriter
       make_writer = RawDocWriter
@@ -164,7 +171,6 @@ class FoldsApp(App):
     def new_writer(key):
         fold_num = len(writers)
         path = self.args.path_tpl.format(n=fold_num, key=key)
-        import sys, os.path
         if not self.args.overwrite and os.path.exists(path):
           print('Path {0} already exists. Use --overwrite to overwrite.'.format(path), file=sys.stderr)
           sys.exit(1)
@@ -175,6 +181,7 @@ class FoldsApp(App):
       get_writer = lambda key: make_writer(fopen(self.args.path_tpl.format(key=key), 'ab'))
     else:
       writers = {}
+
       def get_writer(key):
         try:
           writer = writers[key]
@@ -193,4 +200,3 @@ FormatApp.register_name('format')
 GrepApp.register_name('grep')
 SortApp.register_name('sort')
 FoldsApp.register_name('folds')
-###SetFieldApp.register_name('set')

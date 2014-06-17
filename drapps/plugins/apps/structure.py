@@ -1,15 +1,19 @@
+# vim: set et nosi ai ts=2 sts=2 sw=2:
+# -*- coding: utf-8 -*-
 """
 Apps to restructure a corpus.
 """
-from io import BytesIO
-from collections import defaultdict
-from itertools import islice
-from collections import deque
-from six.moves import range, zip
-import six
+from __future__ import absolute_import, print_function, unicode_literals
+import collections
+import io
+import itertools
+
 from schwa import dr
+import six
+from six.moves import range, zip
+
 from drapps.api import App
-from drapps.appargs import DESERIALISE_AP, OSTREAM_AP, ISTREAM_AP, ArgumentParser
+from drapps.appargs import OSTREAM_AP, ISTREAM_AP, ArgumentParser
 
 
 def SelectField(s):
@@ -32,7 +36,7 @@ class SelectApp(App):
   arg_parsers = (field_list_ap, ISTREAM_AP, OSTREAM_AP)
 
   def __init__(self, argparser, args):
-    field_dict = defaultdict(set)
+    field_dict = collections.defaultdict(set)
     for klass, field in (args.fields or ()):
       field_dict[klass].add(field)
     args.doc_fields = field_dict[None]
@@ -95,7 +99,7 @@ class RenameApp(App):
   arg_parsers = (rename_list_ap, ISTREAM_AP, OSTREAM_AP)
 
   def __init__(self, argparser, args):
-    rename_dict = defaultdict(set)
+    rename_dict = collections.defaultdict(set)
     for klass, new, old in (args.renames or ()):
       rename_dict[klass].add((new, old))
     args.renames = dict(rename_dict)
@@ -209,7 +213,7 @@ class SubsetApp(App):
 class HeadApp(SubsetApp):
   """
   Extract the first n documents, optionally after a skipped quantity.
-  
+
   Examples:
     %(prog)s           # extract the first document from STDIN
     %(prog)s -n5       # extract the first five documents
@@ -245,10 +249,10 @@ class TailApp(App):
     # TODO: avoid keeping deserialised objects in memory
     writer = self.raw_stream_writer
     reader = self.raw_stream_reader
-    buf = deque(maxlen=self.args.ndocs + self.args.skip)
+    buf = collections.deque(maxlen=self.args.ndocs + self.args.skip)
     for doc in reader:
       buf.append(doc)
-    for doc in islice(buf, self.args.ndocs):
+    for doc in itertools.islice(buf, self.args.ndocs):
       writer.write(doc)
 
 
@@ -261,11 +265,11 @@ class GenerateApp(App):
   arg_parsers = (ndocs_ap, OSTREAM_AP)
 
   def __call__(self):
-    empty = BytesIO()
+    empty = io.BytesIO()
     writer = dr.Writer(empty, dr.Doc)
     writer.write(dr.Doc())
     empty = empty.getvalue()
-    
+
     out = self.args.out_stream
     i = 0
     while i < self.args.ndocs:
@@ -273,8 +277,6 @@ class GenerateApp(App):
       i += 1
 
 
-###SelectApp.register_name('select')
-###RenameApp.register_name('rename')
 HeadApp.register_name('head')
 TailApp.register_name('tail')
 SubsetApp.register_name('subset')

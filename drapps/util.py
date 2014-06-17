@@ -1,11 +1,18 @@
-from collections import namedtuple
-import msgpack
+# vim: set et nosi ai ts=2 sts=2 sw=2:
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, print_function, unicode_literals
+import collections
 
-RawDoc = namedtuple('RawDoc', ('version', 'klasses', 'stores', 'doc', 'instances'))
+import msgpack
+from six.moves import range
+
+
+RawDoc = collections.namedtuple('RawDoc', ('version', 'klasses', 'stores', 'doc', 'instances'))
+
 
 class RawDoc(object):
   __slots__ = ('version', 'klasses', 'stores', '_doc', '_instances', '_doc_packed', '_instances_packed')
-  
+
   def __init__(self, version, klasses, stores, doc, instances, packed=True):
     self.version = version
     self.klasses = klasses
@@ -104,8 +111,10 @@ class RawDoc(object):
 def read_raw_docs(unpacker, on_end='error'):
   return RawDoc.from_stream(unpacker, on_end=on_end)
 
+
 def write_raw_doc(out, doc):
   doc.write(out)
+
 
 class RawDocWriter(object):
   def __init__(self, out):

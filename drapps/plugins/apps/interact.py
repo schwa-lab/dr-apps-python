@@ -1,13 +1,16 @@
-
+# vim: set et nosi ai ts=2 sts=2 sw=2:
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, print_function, unicode_literals
 import os
+
 from drapps.api import App, DECORATE_METHOD
-from drapps.appargs import ArgumentParser, argparse, DrInputType, import_string
+from drapps.appargs import ArgumentParser, DrInputType, argparse, import_string
 
 
 class ShellApp(App):
   """
   Loads the given input file into a Python shell as the variable `docs`
-  
+
   Examples:
     %(prog)s -c 'for doc in docs: do_something()'
         # executes the given code on `docs` read with automagic from standard input

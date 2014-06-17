@@ -1,22 +1,28 @@
+# vim: set et nosi ai ts=2 sts=2 sw=2:
+# -*- coding: utf-8 -*-
 """
 Apps to get basic statistics and meta-data from documents.
 """
-from __future__ import print_function
-import sys
-from collections import defaultdict
+from __future__ import absolute_import, print_function, unicode_literals
+import collections
 import datetime
 import io
+import sys
+
 import msgpack
+from six.moves import range, zip
+
 from drapps.api import App
 from drapps.util import read_raw_docs
 from drapps.appargs import ArgumentParser, ISTREAM_AP, DESERIALISE_AP, DrInputType
 
 
 def get_store_names(doc):
-    return (tup[0] for tup in doc.stores)
+  return (tup[0] for tup in doc.stores)
+
 
 def iso_now():
-    return datetime.datetime.now().isoformat()
+  return datetime.datetime.now().isoformat()
 
 
 class CountFormatter(object):
@@ -111,7 +117,7 @@ class CountJsonFormatter(CountFormatter):
 class CountApp(App):
   """
   Count the number of documents or annotations in named stores.
-  
+
   Examples:
     %(prog)s
         # display the number of documents found on standard input
@@ -223,7 +229,7 @@ class CountApp(App):
     except NameError:
       print("No documents to count", file=sys.stderr)
     self.formatter.finish()
-  
+
   def _get_counters(self, doc):
     names = []
     extractors = []
@@ -244,7 +250,7 @@ class CountApp(App):
   @staticmethod
   def _doc_counter(doc):
     return 1
-  
+
   def _make_store_counter(self, attr):
     if not self.args.count_bytes:
       def count(doc):
@@ -254,7 +260,6 @@ class CountApp(App):
         return 0
     else:
       # TODO: use wire count, relying on Joel's patches to msgpack-python
-      import msgpack
       def count(doc):
         if attr == '__meta__':
           return len(msgpack.packb(doc.doc))
@@ -277,7 +282,7 @@ class ListStoresApp(App):
   arg_parsers = (ls_arg_parser, DESERIALISE_AP,)
 
   def __call__(self):
-    counter = defaultdict(int)
+    counter = collections.defaultdict(int)
     for i, doc in enumerate(self.raw_stream_reader):
       names = list(get_store_names(doc))
       if self.args.show_each:

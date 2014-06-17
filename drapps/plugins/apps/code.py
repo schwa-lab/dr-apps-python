@@ -1,10 +1,11 @@
-
-from __future__ import print_function
+# vim: set et nosi ai ts=2 sts=2 sw=2:
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, print_function, unicode_literals
 from collections import namedtuple
-import sys
 import functools
-from drapps.api import App, add_subparsers, SubParsed
-from drapps.appargs import ArgumentParser, DESERIALISE_AP, OSTREAM_AP
+
+from drapps.api import App, SubParsed, add_subparsers
+from drapps.appargs import DESERIALISE_AP, OSTREAM_AP, ArgumentParser
 
 
 Names = namedtuple('Names', 'local qual serial')
@@ -57,7 +58,7 @@ class GenPy(SrcGenLang):
     for klass in schema.klasses():
       self._define_ann(klass, get_names)
     self._define_ann(schema, get_names, is_doc=True)
-  
+
   def _define_ann(self, klass, get_names, is_doc=False):
     # TODO: help/docstrings
     super_cls = 'dr.Doc' if is_doc else 'dr.Ann'
@@ -81,7 +82,7 @@ class GenPy(SrcGenLang):
       fnames = get_names(field)
       name = fnames.local
       serial = ', serial={0!r}'.format(fnames.serial) if fnames.serial else ''
-      
+
       if field.is_pointer:
         targ_type = field.points_to.stored_type
         targ_name = get_names(targ_type).local
@@ -107,24 +108,11 @@ class GenPy(SrcGenLang):
     self._print()
     self._print()
 
-
   def _print(self, obj='', indent=0):
     print(self.args.indent * indent + str(obj), file=self.args.out_stream)
 
 
-###class GenJava(SrcGenLang):
-###  """Generate Java declarations"""
-###  pass
-
-
-###class GenCpp(SrcGenLang):
-###  """Generate C++ declarations"""
-###  pass
-
-
 GenPy.register_name('python')
-###GenJava.register_name('java')
-###GenCpp.register_name('cpp')
 
 
 class SrcGenerator(App):
@@ -143,7 +131,7 @@ class SrcGenerator(App):
 
   def __call__(self):
     doc = next(self.stream_reader)
-    schema = doc._dr_rt.copy_to_schema() #### WARNING: using private
+    schema = doc._dr_rt.copy_to_schema()  # WARNING: using private
     self.generate(schema)
 
 

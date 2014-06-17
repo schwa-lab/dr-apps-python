@@ -1,14 +1,19 @@
-
-import sys
+# vim: set et nosi ai ts=2 sts=2 sw=2:
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, print_function, unicode_literals
+from functools import partial
 import argparse
 import gzip
-from functools import partial
-from .util import import_string
-from .api import DECORATE_METHOD
+import sys
 
 import six
 
+from .api import DECORATE_METHOD
+from .util import import_string
+
+
 ArgumentParser = partial(argparse.ArgumentParser, add_help=False, formatter_class=argparse.RawDescriptionHelpFormatter)
+
 
 class SuffixDependentType(object):
   def __init__(self, suffix_fns):
@@ -17,7 +22,7 @@ class SuffixDependentType(object):
     suffix_fns = list(suffix_fns)
     suffix_fns.sort(key=lambda suf_fn: -len(suf_fn[0]))
     self.suffix_fns = suffix_fns
-  
+
   def __call__(self, arg):
     for suf, fn in self.suffix_fns:
       if arg.endswith(suf):
@@ -38,6 +43,7 @@ DESERIALISE_AP.add_argument('--doc-class', metavar='CLS', dest='doc_class', type
 
 OSTREAM_AP = ArgumentParser(add_help=False)
 OSTREAM_AP.add_argument('--out-file', metavar='PATH', dest='out_stream', type=DrOutputType, default=sys.stdout.buffer if six.PY3 else sys.stdout, help='The output file (default: STDOUT)')
+
 
 def get_evaluator_ap(extra={}):
   from .api import add_subparsers, Evaluator

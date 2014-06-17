@@ -1,9 +1,13 @@
+# vim: set et nosi ai ts=2 sts=2 sw=2:
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, print_function, unicode_literals
+
 try:
   from django.conf import settings
   try:
       settings.configure()
   except RuntimeError:
-      pass # assume already configured
+      pass  # assume already configured
   from django.template import Template, Context
 except ImportError:
   Template = None

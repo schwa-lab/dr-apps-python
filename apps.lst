@@ -2,13 +2,13 @@ conll
 count-py
 dump
 grep-py
-folds
 format
 generate
 hackheader
 ls
 shell
 sort
+split
 srcgen
 subset
 upgrade

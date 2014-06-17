@@ -46,7 +46,7 @@ class GrepApp(App):  # grep
 
 
 class RandomEvaluator(Evaluator):
-  """Distribute to each of k folds"""
+  """Shuffle the input randomly"""
   ap = ArgumentParser()
   ap.add_argument('--seed', dest='rand_seed', type=int, default=None)
   arg_parsers = (ap,)
@@ -119,7 +119,7 @@ class KFoldsEvaluator(Evaluator):
     return ind % self.args.kfolds
 
 
-class FoldsApp(App):
+class SplitApp(App):
   """
   Split a stream into k files, or a separate file for each key determined per doc.
   To perform stratified k-fold validation, first sort the corpus by the stratification label.
@@ -136,7 +136,7 @@ class FoldsApp(App):
   def __init__(self, argparser, args):
     if '{' not in args.path_tpl:
       argparser.error('Output path template must include a substitution (e.g. {n:02d} or {key})')
-    super(FoldsApp, self).__init__(argparser, args)
+    super(SplitApp, self).__init__(argparser, args)
     if self.args.sparse:
       if self.args.overwrite:
         argparser.error('--overwrite does not apply with --sparse')
@@ -203,4 +203,4 @@ class FoldsApp(App):
 FormatApp.register_name('format')
 GrepApp.register_name('grep')
 SortApp.register_name('sort')
-FoldsApp.register_name('folds')
+SplitApp.register_name('split')

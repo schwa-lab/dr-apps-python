@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function, unicode_literals
 import ast
+import json
 import pprint
 
 import msgpack
@@ -13,6 +14,10 @@ from drapps.util import read_raw_docs
 from drapps.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP
 
 
+FORMATTERS = {
+    'json': json.dumps,
+    'pprint': pprint.pformat,
+}
 META_TYPE = 0
 
 
@@ -24,19 +29,28 @@ class DumpApp(App):
   dump_ap.add_argument('-m', '--human', dest='human_readable', action='store_true', default=False, help='Reinterpret the messages to be more human-readable by integrating headers into content.')
   dump_ap.add_argument('-n', '--numbered', action='store_true', default=False, help='In --human mode, add a \'#\' field to each annotation, indicating its ordinal index')
   dump_ap.add_argument('-d', '--headers', dest='hide_instances', action='store_true', default=False, help='Show headers only, hiding any instances')
+  dump_ap.add_argument('-r', '--reverse-pointers', action='store_true', default=False, help='Show pointer and slice sources at their target sites, only if --human')
+  dump_ap.add_argument('-j', '--json', dest='format', action='store_const', const='json', default='pprint', help='Output valid JSON')
   arg_parsers = (dump_ap, ISTREAM_AP, OSTREAM_AP)
 
   def dump(self, obj):
-    pprint.pprint(obj, self.args.out_stream)
+    print(self.format(obj), file=self.args.out_stream)
 
   def __call__(self):
+    self.format = FORMATTERS[self.args.format]
     unpacker = msgpack.Unpacker(self.args.in_stream)
     if self.args.human_readable:
       unpacker = self._integrate_names(unpacker)
     elif self.args.hide_instances:
       unpacker = self._headers_only(unpacker)
+    first = True
     for obj in unpacker:
+      if self.args.format == 'json':
+        print('[' if first else ',', file=self.args.out_stream)
       self.dump(obj)
+      first = False
+    if self.args.format == 'json':
+      print(']')
 
   def _headers_only(self, unpacker):
     for doc in read_raw_docs(unpacker):
@@ -49,7 +63,8 @@ class DumpApp(App):
       obj = {}
       obj['__version__'] = doc.version
       store_defs = list(self._process_store_defs(doc.stores, doc.klasses))
-      obj['__meta__'] = self._process_annot(doc.doc, doc.klasses[META_TYPE][1])
+      obj['__meta__'] = {'fields': dict(self._fields_to_dict(doc.klasses[META_TYPE][1], store_defs)),
+                         'item': self._process_annot(doc.doc, doc.klasses[META_TYPE][1])}
       if self.args.numbered:
           obj['#'] = i
       for (store_name, store), instances in zip(store_defs, doc.instances):
@@ -60,6 +75,10 @@ class DumpApp(App):
             for j, item in enumerate(store['items']):
               item['#'] = j
         store['fields'] = dict(self._fields_to_dict(store['fields'], store_defs))
+
+      if self.args.reverse_pointers:
+        self._reverse_pointers_with_names(obj)
+
       yield obj
 
   def _process_store_defs(self, msg, types):
@@ -72,7 +91,7 @@ class DumpApp(App):
       yield name, {'type': type_name, 'fields': type_fields, 'count': size}
 
   def _process_annot(self, msg, fields):
-    return dict((fields[fnum][FieldType.NAME], val) for fnum, val in msg.iteritems())
+    return dict((fields[fnum][FieldType.NAME], val) for fnum, val in msg.items())
 
   TRAIT_NAMES = {
       FieldType.IS_SLICE: 'is slice',
@@ -94,6 +113,36 @@ class DumpApp(App):
         else:
           traits[k] = v
       yield name, traits
+
+  def _reverse_pointers_with_names(self, obj):
+    for source_name, source_store in obj.items():
+      if source_name == '__version__':
+        continue
+      for source_field, source_desc in source_store.get('fields', {}).items():
+        target_name = source_desc.get('points to')
+        if target_name is None:
+          continue
+
+        qual_field = '{}.{}'.format(source_name, source_field)
+        target_items = obj[target_name]['items']
+        is_slice = 'is slice' in source_desc
+        if source_name == '__meta__':
+          source_items = [source_store['item']]
+        else:
+          source_items = source_store['items']
+        for i, source_item in enumerate(source_items):
+          pointers = source_item.get(source_field)
+          if not pointers:
+            continue
+          if is_slice:
+            for target in target_items[pointers[0]:pointers[0] + pointers[1]]:
+              target.setdefault(qual_field, []).append(i)
+          else:
+            if isinstance(pointers, list):
+              for j in pointers:
+                target_items[j].setdefault(qual_field, []).append(i)
+            else:
+              target_items[pointers].setdefault(qual_field, []).append(i)
 
 
 class HackHeaderApp(App):

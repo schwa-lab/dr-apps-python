@@ -6,11 +6,10 @@ Apps to get basic statistics and meta-data from documents.
 from __future__ import absolute_import, print_function, unicode_literals
 import collections
 import datetime
-import io
 import sys
 
 import msgpack
-from six.moves import range, zip
+from six.moves import zip
 
 from drapps.api import App
 from drapps.util import read_raw_docs

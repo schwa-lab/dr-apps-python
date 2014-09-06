@@ -7,6 +7,7 @@ import pprint
 
 import msgpack
 from schwa.dr.constants import FieldType
+import six
 from six.moves import zip
 
 from drapps.api import App
@@ -36,9 +37,11 @@ class DumpApp(App):
   def dump(self, obj):
     print(self.format(obj), file=self.args.out_stream)
 
-  def __call__(self):
+  def __call__(self, encoding='utf-8'):
+    if six.PY2 and isinstance(encoding, six.text_type):
+      encoding = encoding.encode('utf-8')
     self.format = FORMATTERS[self.args.format]
-    unpacker = msgpack.Unpacker(self.args.in_stream)
+    unpacker = msgpack.Unpacker(self.args.in_stream, encoding=encoding)
     if self.args.human_readable:
       unpacker = self._integrate_names(unpacker)
     elif self.args.hide_instances:

@@ -4,7 +4,8 @@ from __future__ import absolute_import, print_function, unicode_literals
 import collections
 
 import msgpack
-from six.moves import range
+import six
+from six.moves import xrange
 
 
 RawDoc = collections.namedtuple('RawDoc', ('version', 'klasses', 'stores', 'doc', 'instances'))
@@ -27,26 +28,29 @@ class RawDoc(object):
       self._doc_packed = self._instances_packed = None
 
   @classmethod
-  def from_stream(cls, unpacker, on_end='error'):
+  def from_stream(cls, unpacker, on_end='error', encoding='utf-8'):
     if on_end not in ('error', 'break'):
         raise ValueError('on_end must be "error" or "break"')
     if not hasattr(unpacker, 'unpack'):
-      unpacker = msgpack.Unpacker(unpacker, use_list=True)
-    unpack = unpacker.unpack
-    read_bytes = unpacker.read_bytes
+      if six.PY2 and isinstance(encoding, six.text_type):
+        encoding = encoding.encode('utf-8')
+      unpacker = msgpack.Unpacker(unpacker, use_list=True, encoding=encoding)
+
     try:
       while True:
         try:
-          klasses = unpack()
+          klasses = unpacker.unpack()
         except msgpack.OutOfData:
           return
         if isinstance(klasses, int):
           version = klasses
-          klasses = unpack()
+          klasses = unpacker.unpack()
         else:
           version = 1
-        stores = unpack()
-        yield cls(version, klasses, stores, read_bytes(unpack()), [read_bytes(unpack()) for i in range(len(stores))], packed=True)
+        stores = unpacker.unpack()
+        doc = unpacker.read_bytes(unpacker.unpack())
+        instances = [unpacker.read_bytes(unpacker.unpack()) for i in xrange(len(stores))]
+        yield cls(version, klasses, stores, doc, instances, packed=True)
     except msgpack.OutOfData:
       if on_end == 'error':
         raise

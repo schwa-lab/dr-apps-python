@@ -71,18 +71,22 @@ class ShellApp(App):
 
   def run_startup(self):
     res = {'__name__': '__main__'}
-    pythonrc = os.environ.get("PYTHONSTARTUP")
+    pythonrc = os.environ.get('PYTHONSTARTUP')
     if pythonrc and os.path.isfile(pythonrc):
-      try:
-        exec(open(pythonrc), res)
-      except NameError:
-        pass
-    exec('import user', res)
+      with open(pythonrc, 'rU') as f:
+        try:
+          exec(f.read(), res)
+        except NameError:
+          pass
+    try:
+      exec('import user', res)
+    except ImportError:
+      pass
     return res
 
   def run_ipython(self, local):
     try:
-      from IPython.frontend.terminal.embed import TerminalInteractiveShell
+      from IPython.terminal.embed import TerminalInteractiveShell
       shell = TerminalInteractiveShell(user_ns=local)
       shell.mainloop()
     except ImportError:

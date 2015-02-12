@@ -16,14 +16,14 @@ from drapps.appargs import ArgumentParser, ISTREAM_AP, OSTREAM_AP
 class UpgradeVersionApp(App):
   """Upgrade wire format"""
 
-  MAX_VERSION = 2
+  MAX_VERSION = 3
   ver_ap = ArgumentParser()
   ver_ap.add_argument('-t', '--target', dest='target_version', metavar='VERSION', default=MAX_VERSION, type=int, help='The target version number')
   # TODO: add arguments to save output to input file
   arg_parsers = (ver_ap, ISTREAM_AP, OSTREAM_AP)
 
   def __call__(self):
-    unpacker = msgpack.Unpacker(self.args.in_stream)
+    unpacker = msgpack.Unpacker(self.args.in_stream, use_list=True, encoding=None)
     out = self.args.out_stream
     if six.PY3:
       out = out.buffer
@@ -32,7 +32,7 @@ class UpgradeVersionApp(App):
 
   def process_doc(self, messages, out):
     try:
-      version = messages.next()
+      version = next(messages)
     except StopIteration:
       return False
     if not isinstance(version, int):
@@ -43,9 +43,9 @@ class UpgradeVersionApp(App):
     for version in range(version, self.args.target_version):
       messages = getattr(self, 'update_to_v{0}'.format(version + 1))(messages)
 
-    msgpack.pack(self.args.target_version, out)  # update functions do not output version
+    msgpack.pack(self.args.target_version, out, use_bin_type=True)  # update functions do not output version
     for msg in messages:
-      msgpack.pack(msg, out)
+      msgpack.pack(msg, out, use_bin_type=True)
 
     return True
 
@@ -59,7 +59,7 @@ class UpgradeVersionApp(App):
     slice_fields = collections.defaultdict(set)
     meta_klass = None
     try:
-      klasses = messages.next()
+      klasses = next(messages)
     except StopIteration as e:
       self._ended_early(self, e)
 
@@ -107,6 +107,62 @@ class UpgradeVersionApp(App):
 
   def _ended_early(self, exc):
     raise ValueError('Messages ended mid-document!')
+
+  def _upgrade_obj_to_v2(self, obj):
+    if isinstance(obj, list):
+      for i, x in enumerate(obj):
+        obj[i] = self._upgrade_obj_to_v2(x)
+    elif isinstance(obj, dict):
+      new_obj = {}
+      for k, v in obj.iteritems():
+        new_obj[self._upgrade_obj_to_v2(k)] = self._upgrade_obj_to_v2(v)
+      obj = new_obj
+    elif isinstance(obj, str):
+      try:
+        obj = obj.decode('utf-8')
+      except UnicodeDecodeError:
+        pass
+    return obj
+
+  def update_to_v3(self, messages):
+    """
+    Tries to decode as UTF-8 all values that were the old MessagePack string type. If they
+    successfully decode, write them back out as a new MessagePack UTF-8 type; otherwise write them
+    out as a new MesagePack bytes type.
+    """
+    klasses = next(messages)
+    assert isinstance(klasses, list)
+
+    stores = next(messages)
+    assert isinstance(stores, list)
+
+    doc_instance_nbytes = next(messages)
+    assert isinstance(doc_instance_nbytes, int)
+    doc_instance = next(messages)
+    assert isinstance(doc_instance, dict)
+
+    all_instance_groups = []
+    for i in range(len(stores)):
+      instance_nbytes = next(messages)
+      assert isinstance(instance_nbytes, int)
+      instance_groups = next(messages)
+      assert isinstance(instance_groups, list)
+      all_instance_groups.append(instance_groups)
+
+    klasses = self._upgrade_obj_to_v2(klasses)
+    yield klasses
+
+    stores = self._upgrade_obj_to_v2(stores)
+    yield stores
+
+    doc_instance = self._upgrade_obj_to_v2(doc_instance)
+    yield len(msgpack.packb(doc_instance, use_bin_type=True))
+    yield doc_instance
+
+    for instance_groups in all_instance_groups:
+      instance_groups = self._upgrade_obj_to_v2(instance_groups)
+      yield len(msgpack.packb(instance_groups, use_bin_type=True))
+      yield instance_groups
 
 
 UpgradeVersionApp.register_name('upgrade')

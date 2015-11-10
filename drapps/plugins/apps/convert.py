@@ -34,8 +34,16 @@ class _AppendSliceField(argparse._AppendAction):
 
 class _SliceFormatter(object):
   def __init__(self, rev_attr, sub_attr):
-    self.get_slice_data = attrgetter(rev_attr)
+    self.rev_attr = rev_attr
     self.get_value = attrgetter(sub_attr)
+
+  def get_slice_data(self, tok):
+    d = getattr(tok, self.rev_attr)
+    if isinstance(d, list):
+        assert 0 <= len(d) <= 1, 'Non-mutually-exclusive rev_attr {} has multiple values {}. Policy undefined!'.format(self.rev_attr, d)
+        return d[0]
+    else:
+        return d
 
 
 class _IOB(_SliceFormatter):
